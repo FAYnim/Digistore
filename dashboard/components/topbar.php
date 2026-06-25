@@ -1,0 +1,14 @@
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+  <div class="flex h-14 items-center gap-3 px-4 sm:px-5 lg:px-6">
+    <button id="openSidebar" class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 lg:hidden" type="button"><i class="fa-solid fa-bars"></i></button>
+    <div class="min-w-0 flex-1">
+      <h1 class="truncate text-lg font-black tracking-tight text-slate-950 dark:text-white"><?= $pageTitle ?></h1>
+    </div>
+    <label class="hidden w-56 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900 md:flex">
+      <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+      <input class="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:text-white" placeholder="Cari cepat" type="search">
+    </label>
+    <button id="themeToggle" class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200" type="button"><i class="fa-solid fa-circle-half-stroke"></i></button>
+    <button class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200" type="button">Admin</button>
+  </div>
+</header>
