@@ -25,7 +25,7 @@ function productCard(product) {
         </div>
         <h3 class="product-title">${product.name}</h3>
         <p class="product-desc">${product.description}</p>
-        <div class="product-meta"><span>★ ${product.rating}</span><span>${product.sold}+ terjual</span><span>Stok ${product.stock}</span></div>
+        <div class="product-meta"><span><i class="fa-solid fa-star text-[var(--warning)]"></i> ${product.rating}</span><span>${product.sold}+ terjual</span><span>Stok ${product.stock}</span></div>
         <div class="price"><strong>${formatRupiah(product.price)}</strong><del>${formatRupiah(product.originalPrice)}</del></div>
         <div class="card-actions">
           <button class="small-btn" type="button" onclick="showDetail('${product.name.replaceAll("'", "\\'")}')">Lihat Detail</button>
@@ -66,13 +66,18 @@ function renderFeatured() {
 }
 
 function renderTestimonials() {
-  $("#testimonialGrid").innerHTML = testimonials.map((item) => `
+  $("#testimonialGrid").innerHTML = testimonials.map((item) => {
+    const stars = Array.from({ length: 5 }, (_, i) =>
+      i < item.rating ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>'
+    ).join("");
+    return `
     <article class="testimonial-card">
-      <div class="text-[var(--warning)]">${"★".repeat(item.rating)}${"☆".repeat(5 - item.rating)}</div>
+      <div class="text-[var(--warning)]">${stars}</div>
       <p>${item.message}</p>
       <b class="mt-5 block">${item.name}</b>
       <span class="text-sm font-bold text-[var(--muted)]">${item.role}</span>
-    </article>`).join("");
+    </article>`;
+  }).join("");
 }
 
 function initTheme() {
@@ -83,7 +88,8 @@ function initTheme() {
 }
 
 function updateThemeIcon() {
-  $("#themeToggle").textContent = document.documentElement.classList.contains("dark") ? "☀" : "☾";
+  const isDark = document.documentElement.classList.contains("dark");
+  $("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
 }
 
 function openBuyModal(name) {

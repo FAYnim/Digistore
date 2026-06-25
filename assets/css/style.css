@@ -35,6 +35,10 @@ body { font-family: "Plus Jakarta Sans", sans-serif; min-height: 100vh; backgrou
 .font-display { font-family: "Sora", sans-serif; }
 .shadow-brand { box-shadow: none; }
 
+.icon-btn i, .cart-btn i { font-size: 16px; }
+.product-meta i { font-size: 12px; }
+.testimonial-card i { font-size: 14px; }
+
 .nav-link { position: relative; transition: color .2s ease; }
 .nav-link:hover { color: var(--text); }
 .nav-link::after { content: ""; position: absolute; left: 0; bottom: -8px; height: 2px; width: 0; background: var(--accent); transition: width .2s ease; }

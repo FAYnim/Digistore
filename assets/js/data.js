@@ -10,13 +10,13 @@ const products = [
 ];
 
 const categories = [
-  { id: "all", name: "Semua Produk", icon: "🛍️" },
-  { id: "akun-premium", name: "Akun Premium", icon: "⭐" },
-  { id: "source-code", name: "Source Code", icon: "💻" },
-  { id: "template-website", name: "Template Website", icon: "🌐" },
-  { id: "tools-ai", name: "Tools AI", icon: "🤖" },
-  { id: "desain-digital", name: "Desain Digital", icon: "🎨" },
-  { id: "produktivitas", name: "Produktivitas", icon: "⚡" }
+  { id: "all", name: "Semua Produk", icon: "fa-solid fa-bag-shopping" },
+  { id: "akun-premium", name: "Akun Premium", icon: "fa-solid fa-star" },
+  { id: "source-code", name: "Source Code", icon: "fa-solid fa-laptop-code" },
+  { id: "template-website", name: "Template Website", icon: "fa-solid fa-globe" },
+  { id: "tools-ai", name: "Tools AI", icon: "fa-solid fa-robot" },
+  { id: "desain-digital", name: "Desain Digital", icon: "fa-solid fa-palette" },
+  { id: "produktivitas", name: "Produktivitas", icon: "fa-solid fa-bolt" }
 ];
 
 const testimonials = [
