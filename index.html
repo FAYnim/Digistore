@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Katalog produk digital premium untuk akun, source code, template website, tools AI, dan kebutuhan digital lainnya.">
+  <title>DigiStore — Katalog Produk Digital Premium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased">
+  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[color:var(--surface-glass)] backdrop-blur-xl">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8" aria-label="Navigasi utama">
+      <a href="#produk" class="flex items-center gap-3 font-display text-xl font-extrabold tracking-tight">
+        <span class="grid h-10 w-10 place-items-center rounded-2xl bg-[var(--accent)] text-white shadow-brand">D</span>
+        DigiStore
+      </a>
+      <div class="hidden items-center gap-8 text-sm font-semibold text-[var(--muted)] md:flex">
+        <a class="nav-link" href="#produk">Katalog</a>
+        <a class="nav-link" href="#kategori">Kategori</a>
+        <a class="nav-link" href="#unggulan">Unggulan</a>
+        <a class="nav-link" href="#testimoni">Testimoni</a>
+        <a class="nav-link" href="#kontak">Kontak</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema">☾</button>
+        <button class="cart-btn" type="button" aria-label="Keranjang dummy">🛒 <span>2</span></button>
+        <button id="menuToggle" class="icon-btn md:hidden" type="button" aria-label="Buka menu">☰</button>
+      </div>
+    </nav>
+    <div id="mobileMenu" class="hidden border-t border-[var(--border)] px-4 py-3 md:hidden">
+      <div class="grid gap-3 text-sm font-semibold text-[var(--muted)]">
+        <a href="#produk">Katalog</a><a href="#kategori">Kategori</a><a href="#unggulan">Unggulan</a><a href="#testimoni">Testimoni</a><a href="#kontak">Kontak</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="home">
+    <section id="produk" class="section catalog-first">
+      <div class="orb orb-a"></div><div class="orb orb-b"></div>
+      <div class="section-head catalog-head">
+        <span>Katalog Produk Digital</span>
+        <h1>Pilih Akun Premium & Produk Digital Siap Pakai</h1>
+        <p>Cari produk favoritmu, cek harga dan stok, lalu beli dengan cepat.</p>
+      </div>
+      <div class="catalog-toolbar">
+        <label class="sr-only" for="searchInput">Cari produk</label>
+        <input id="searchInput" class="control" type="search" placeholder="Cari akun premium, tools AI, template...">
+        <label class="sr-only" for="categorySelect">Filter kategori</label>
+        <select id="categorySelect" class="control"></select>
+        <label class="sr-only" for="sortSelect">Urutkan produk</label>
+        <select id="sortSelect" class="control">
+          <option value="newest">Terbaru</option>
+          <option value="price-low">Harga Terendah</option>
+          <option value="price-high">Harga Tertinggi</option>
+          <option value="rating">Rating Tertinggi</option>
+        </select>
+      </div>
+      <div id="productGrid" class="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4"></div>
+      <div id="emptyState" class="hidden empty-state"><h3>Produk tidak ditemukan.</h3><p>Coba gunakan kata kunci lain atau pilih kategori berbeda.</p></div>
+    </section>
+
+    <section id="unggulan" class="section compact-section">
+      <div class="section-head"><span>Unggulan</span><h2>Produk yang paling sering dibeli pelanggan.</h2></div>
+      <div id="featuredGrid" class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4"></div>
+    </section>
+
+    <section class="section">
+      <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <article class="benefit-card"><b>Pengiriman Cepat</b><p>Produk dikirim secara cepat setelah pembayaran dikonfirmasi.</p></article>
+        <article class="benefit-card"><b>Produk Terverifikasi</b><p>Setiap produk dicek sebelum ditampilkan di katalog.</p></article>
+        <article class="benefit-card"><b>Harga Terjangkau</b><p>Pilihan produk digital dengan harga kompetitif.</p></article>
+        <article class="benefit-card"><b>Support Responsif</b><p>Bantuan tersedia untuk kendala produk dan pesanan.</p></article>
+      </div>
+    </section>
+
+    <section id="testimoni" class="section">
+      <div class="section-head"><span>Testimoni</span><h2>Dipakai pembeli yang butuh cepat dan praktis.</h2></div>
+      <div id="testimonialGrid" class="mt-10 grid gap-5 lg:grid-cols-3"></div>
+    </section>
+
+    <section class="section">
+      <div class="cta-card">
+        <h2>Siap Menemukan Produk Digital yang Kamu Butuhkan?</h2>
+        <p>Jelajahi katalog produk digital pilihan dan temukan produk yang sesuai dengan kebutuhanmu hari ini.</p>
+        <a href="#produk" class="primary-btn">Mulai Belanja</a>
+      </div>
+    </section>
+  </main>
+
+  <footer id="kontak" class="border-t border-[var(--border)] px-4 py-12 lg:px-8">
+    <div class="mx-auto grid max-w-7xl gap-8 md:grid-cols-4">
+      <div class="md:col-span-2"><h2 class="font-display text-2xl font-extrabold">DigiStore</h2><p class="mt-3 max-w-md text-sm leading-7 text-[var(--muted)]">Platform katalog produk digital sederhana untuk kebutuhan akun premium, source code, template, dan tools digital.</p></div>
+      <div><b>Menu</b><div class="mt-3 grid gap-2 text-sm text-[var(--muted)]"><a href="#produk">Katalog</a><a href="#kategori">Kategori</a><a href="#unggulan">Unggulan</a><a href="#testimoni">Testimoni</a></div></div>
+      <div><b>Kontak</b><div class="mt-3 grid gap-2 text-sm text-[var(--muted)]"><span>WhatsApp dummy</span><span>Email dummy</span><span>Instagram dummy</span></div></div>
+    </div>
+    <p class="mx-auto mt-10 max-w-7xl text-sm text-[var(--muted)]">© 2026 DigiStore. All rights reserved.</p>
+  </footer>
+
+  <div id="buyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div class="modal-card">
+      <button id="closeModal" class="float-right text-xl" type="button" aria-label="Tutup modal">×</button>
+      <p class="badge">Checkout Dummy</p>
+      <h2 id="modalTitle" class="mt-4 font-display text-2xl font-extrabold"></h2>
+      <p class="mt-3 text-[var(--muted)]">Fitur checkout asli akan dikembangkan pada tahap berikutnya.</p>
+    </div>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
