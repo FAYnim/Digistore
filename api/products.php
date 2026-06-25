@@ -15,6 +15,12 @@ $allowedSort = [
 $conditions = ["p.status IN ('active', 'out_of_stock')", "(c.status = 'active' OR p.category_id IS NULL)"];
 $params = [];
 $featured = isset($_GET['featured']) && $_GET['featured'] === 'true';
+$slug = isset($_GET['slug']) ? trim($_GET['slug']) : '';
+
+if ($slug !== '') {
+    $conditions[] = 'p.slug = ?';
+    $params[] = $slug;
+}
 
 if ($featured) {
     $conditions[] = 'p.status = ?';
@@ -82,6 +88,13 @@ try {
         $row['rating'] = (float) $row['rating'];
     }
     unset($row);
+
+    if ($slug !== '') {
+        if (!$rows) {
+            json_error('Produk tidak ditemukan.', null, 404);
+        }
+        json_success('Produk berhasil dimuat', $rows[0]);
+    }
 
     json_success('Produk berhasil dimuat', $rows);
 } catch (PDOException $e) {

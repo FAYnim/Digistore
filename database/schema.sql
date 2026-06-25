@@ -74,8 +74,10 @@ CREATE TABLE orders (
   customer_phone   VARCHAR(30) DEFAULT NULL,
   total_amount     INT NOT NULL DEFAULT 0,
   payment_method   VARCHAR(50) DEFAULT NULL,
+  payment_deadline DATETIME DEFAULT NULL,
   status           ENUM('pending', 'paid', 'completed', 'cancelled') DEFAULT 'pending',
   note             TEXT DEFAULT NULL,
+  delivery_note    TEXT DEFAULT NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

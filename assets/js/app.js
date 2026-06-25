@@ -31,6 +31,7 @@ function normalizeProduct(product) {
   return {
     id: Number(product.id),
     name: product.name || "Produk",
+    slug: product.slug || "",
     category: product.category_name || "Tanpa Kategori",
     categorySlug: product.category_slug || "uncategorized",
     price: Number(product.price || 0),
@@ -66,8 +67,8 @@ function productCard(product) {
         <div class="product-meta"><span><i class="fa-solid fa-star text-[var(--warning)]"></i> ${product.rating}</span><span>${product.sold}+ terjual</span><span>Stok ${product.stock}</span></div>
         <div class="price"><strong>${formatRupiah(product.price)}</strong>${originalPrice}</div>
         <div class="card-actions">
-          <button class="small-btn" type="button" data-detail="${safeName}">Lihat Detail</button>
-          <button class="small-btn buy-btn" type="button" ${stock.disabled ? "disabled" : ""} data-buy="${safeName}">Beli Sekarang</button>
+          <button class="small-btn" type="button" data-detail="${escapeText(product.slug)}">Lihat Detail</button>
+          <button class="small-btn buy-btn" type="button" ${stock.disabled ? "disabled" : ""} data-buy="${escapeText(product.slug)}">${stock.disabled ? "Habis" : "Beli Sekarang"}</button>
         </div>
       </div>
     </article>`;
@@ -153,17 +154,6 @@ function updateThemeIcon() {
   $("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
 }
 
-function openBuyModal(name) {
-  $("#modalTitle").textContent = name;
-  $("#buyModal").classList.remove("hidden");
-  $("#buyModal").classList.add("flex");
-}
-
-function closeBuyModal() {
-  $("#buyModal").classList.add("hidden");
-  $("#buyModal").classList.remove("flex");
-}
-
 async function loadLandingData() {
   setLoading();
   const [settings, categories, products, featured, testimonials] = await Promise.all([
@@ -202,13 +192,11 @@ $("#menuToggle").addEventListener("click", () => $("#mobileMenu").classList.togg
 $("#searchInput").addEventListener("input", (event) => { state.query = event.target.value; renderProducts(); });
 $("#categorySelect").addEventListener("change", (event) => { state.category = event.target.value; renderProducts(); });
 $("#sortSelect").addEventListener("change", (event) => { state.sort = event.target.value; renderProducts(); });
-$("#closeModal").addEventListener("click", closeBuyModal);
-$("#buyModal").addEventListener("click", (event) => { if (event.target.id === "buyModal") closeBuyModal(); });
 document.addEventListener("click", (event) => {
   const detail = event.target.closest("[data-detail]");
   const buy = event.target.closest("[data-buy]");
-  if (detail) openBuyModal(detail.dataset.detail);
-  if (buy) openBuyModal(buy.dataset.buy);
+  if (detail && detail.dataset.detail) window.location.href = `checkout.php?product=${encodeURIComponent(detail.dataset.detail)}`;
+  if (buy && buy.dataset.buy) window.location.href = `checkout.php?product=${encodeURIComponent(buy.dataset.buy)}`;
 });
 
 applyTheme();

@@ -4,9 +4,24 @@ async function apiGet(endpoint) {
   try {
     const response = await fetch(`${API_BASE}${endpoint}`);
 
-    if (!response.ok) {
-      throw new Error("Request gagal");
-    }
+    return await response.json();
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message,
+      data: null,
+      errors: null,
+    };
+  }
+}
+
+async function apiPost(endpoint, payload) {
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
     return await response.json();
   } catch (error) {

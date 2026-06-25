@@ -105,15 +105,6 @@
 
   </footer>
 
-  <div id="buyModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-    <div class="modal-card">
-      <button id="closeModal" class="float-right text-xl" type="button" aria-label="Tutup modal"><i class="fa-solid fa-xmark"></i></button>
-      <p class="badge">Checkout Dummy</p>
-      <h2 id="modalTitle" class="mt-4 font-display text-2xl font-extrabold"></h2>
-      <p class="mt-3 text-[var(--muted)]">Fitur checkout asli akan dikembangkan pada tahap berikutnya.</p>
-    </div>
-  </div>
-
   <script src="assets/js/api.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
