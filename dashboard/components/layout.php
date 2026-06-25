@@ -27,7 +27,7 @@ function renderFooter() {
 ?>
     </main>
   </div>
-  <script src="assets/js/dashboard-data.js"></script>
+  <script src="assets/js/api.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>
 </html>

@@ -1,25 +1,37 @@
-let products = [...dashboardProducts];
-let categories = [...dashboardCategories];
-let deleteProductId = null;
+/**
+ * dashboard.js — Dashboard logic, terhubung ke API backend
+ */
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
-const rupiah = (value) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value || 0);
+/* ----------------------------------------------------------------
+ * Utilities
+ * --------------------------------------------------------------- */
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const rupiah = (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
+const slugify = (s) => s.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
-function badgeClass(status) {
-  if (['Aktif', 'Dibayar', 'Selesai', 'Tampil'].includes(status)) return 'badge-green';
-  if (['Menunggu', 'Draft'].includes(status)) return 'badge-yellow';
-  if (['Habis', 'Batal', 'Sembunyi'].includes(status)) return 'badge-red';
+function statusLabel(s) {
+  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu', paid: 'Dibayar', completed: 'Selesai', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
+  return map[s] ?? s;
+}
+
+function badgeClass(s) {
+  if (['active', 'paid', 'completed', 'visible'].includes(s)) return 'badge-green';
+  if (['pending', 'draft'].includes(s))                        return 'badge-yellow';
+  if (['out_of_stock', 'cancelled', 'hidden'].includes(s))    return 'badge-red';
   return 'badge-gray';
 }
 
-function badge(status) {
-  return `<span class="badge ${badgeClass(status)}">${status}</span>`;
+function badge(s) {
+  return `<span class="badge ${badgeClass(s)}">${statusLabel(s)}</span>`;
 }
 
-function openModal(id) { $(id)?.classList.add('open'); }
-function closeModals() { $$('.modal').forEach((modal) => modal.classList.remove('open')); }
+function openModal(id)  { $(id)?.classList.add('open'); }
+function closeModals()  { $$('.modal').forEach((m) => m.classList.remove('open')); }
 
+/* ----------------------------------------------------------------
+ * Shell — sidebar, theme toggle, modal close
+ * --------------------------------------------------------------- */
 function initShell() {
   $('#openSidebar')?.addEventListener('click', () => {
     $('#sidebar')?.classList.remove('-translate-x-full');
@@ -33,130 +45,510 @@ function initShell() {
     document.documentElement.classList.toggle('dark');
     localStorage.setItem('digistore-dashboard-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
   });
-  $$('[data-close-modal]').forEach((button) => button.addEventListener('click', closeModals));
-  $$('.modal').forEach((modal) => modal.addEventListener('click', (event) => { if (event.target === modal) closeModals(); }));
+  $$('[data-close-modal]').forEach((btn) => btn.addEventListener('click', closeModals));
+  $$('.modal').forEach((modal) => modal.addEventListener('click', (e) => { if (e.target === modal) closeModals(); }));
 }
 
-function renderOverview() {
-  const active = products.filter((p) => p.status === 'Aktif').length;
+/* ----------------------------------------------------------------
+ * Overview (index.php)
+ * --------------------------------------------------------------- */
+async function renderOverview() {
+  const res = await api.get('/dashboard/api/stats.php');
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const d = res.data;
+
   const stats = [
-    ['Total Produk', products.length, 'fa-solid fa-box'],
-    ['Produk Aktif', active, 'fa-solid fa-circle-check'],
-    ['Pesanan Hari Ini', dashboardOrders.length, 'fa-solid fa-receipt'],
-    ['Rating Toko', '4.9', 'fa-solid fa-star']
+    ['Total Produk',    d.total_products,     'fa-solid fa-box'],
+    ['Produk Aktif',    d.active_products,    'fa-solid fa-circle-check'],
+    ['Pesanan Hari Ini', d.today_orders,      'fa-solid fa-receipt'],
+    ['Rating Toko',     d.average_rating || '-', 'fa-solid fa-star'],
   ];
-  $('#statsGrid').innerHTML = stats.map(([label, value, icon]) => `<div class="card p-5"><div class="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white"><i class="${icon}"></i></div><p class="text-sm font-bold text-slate-500 dark:text-slate-400">${label}</p><p class="mt-1 text-3xl font-black">${value}</p></div>`).join('');
-  $('#recentOrders').innerHTML = dashboardOrders.map((order) => `<tr><td class="font-black">${order.code}</td><td>${order.customer}</td><td>${order.product}</td><td class="font-bold">${rupiah(order.total)}</td><td>${badge(order.status)}</td></tr>`).join('');
-  $('#popularProducts').innerHTML = products.filter((p) => p.featured).map((product) => `<div class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 dark:border-slate-800"><img class="h-14 w-14 rounded-xl object-cover" src="${product.image}" loading="lazy" alt=""><div class="min-w-0 flex-1"><p class="truncate font-black">${product.name}</p><p class="text-sm text-slate-500 dark:text-slate-400">${rupiah(product.price)}</p></div>${badge(product.status)}</div>`).join('');
+  $('#statsGrid').innerHTML = stats.map(([label, value, icon]) =>
+    `<div class="card p-5">
+       <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600 text-white"><i class="${icon}"></i></div>
+       <p class="text-sm font-bold text-slate-500 dark:text-slate-400">${label}</p>
+       <p class="mt-1 text-3xl font-black">${value}</p>
+     </div>`
+  ).join('');
+
+  $('#recentOrders').innerHTML = (d.recent_orders || []).map((o) =>
+    `<tr>
+       <td class="font-black">${o.order_code}</td>
+       <td>${o.customer_name}</td>
+       <td class="max-w-[160px] truncate">${o.products ?? '-'}</td>
+       <td class="font-bold">${rupiah(o.total_amount)}</td>
+       <td>${badge(o.status)}</td>
+     </tr>`
+  ).join('') || '<tr><td colspan="5" class="text-center text-slate-400">Belum ada pesanan</td></tr>';
+
+  $('#popularProducts').innerHTML = (d.featured_products || []).map((p) =>
+    `<div class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
+       <img class="h-14 w-14 rounded-xl object-cover" src="${p.image_url || 'https://placehold.co/100'}" loading="lazy" alt="">
+       <div class="min-w-0 flex-1">
+         <p class="truncate font-black">${p.name}</p>
+         <p class="text-sm text-slate-500 dark:text-slate-400">${rupiah(p.price)}</p>
+       </div>
+       <span class="text-xs font-bold text-slate-500">${p.sold_count} terjual</span>
+     </div>`
+  ).join('') || '<p class="text-sm text-slate-400">Belum ada produk unggulan.</p>';
 }
 
-function fillCategoryOptions() {
-  const options = categories.map((cat) => `<option value="${cat.name}">${cat.name}</option>`).join('');
-  if ($('#productCategoryFilter')) $('#productCategoryFilter').innerHTML = `<option value="">Semua kategori</option>${options}`;
-  if ($('#productCategory')) $('#productCategory').innerHTML = options;
+/* ----------------------------------------------------------------
+ * Products (products.php)
+ * --------------------------------------------------------------- */
+let _categories = []; // cache kategori untuk dropdown
+
+async function loadCategoryOptions() {
+  if (_categories.length) return;
+  const res = await api.get('/dashboard/api/categories.php');
+  if (res.success) _categories = res.data;
 }
 
-function renderProducts() {
-  fillCategoryOptions();
-  const keyword = ($('#productSearch')?.value || '').toLowerCase();
-  const category = $('#productCategoryFilter')?.value || '';
-  const filtered = products.filter((p) => (!category || p.category === category) && (p.name.toLowerCase().includes(keyword) || p.description.toLowerCase().includes(keyword)));
-  $('#productsTable').innerHTML = filtered.map((product) => `<tr><td><div class="flex items-center gap-3"><img class="h-12 w-12 rounded-xl object-cover" src="${product.image}" loading="lazy" alt=""><div><p class="font-black">${product.name}</p><p class="text-xs text-slate-500 dark:text-slate-400">${product.badge}</p></div></div></td><td>${product.category}</td><td class="font-bold">${rupiah(product.price)}</td><td>${product.stock}</td><td>${badge(product.status)}</td><td><div class="flex gap-2"><button class="btn-soft" onclick="editProduct(${product.id})">Edit</button><button class="btn-soft" onclick="askDeleteProduct(${product.id})">Hapus</button><button class="btn-soft" onclick="alert('Preview: ${product.name}')">Preview</button></div></td></tr>`).join('');
-  $('#productsEmpty')?.classList.toggle('hidden', filtered.length > 0);
+async function renderProducts() {
+  await loadCategoryOptions();
+
+  const keyword    = ($('#productSearch')?.value || '').trim();
+  const categoryId = $('#productCategoryFilter')?.value || '';
+  const params     = new URLSearchParams();
+  if (keyword)    params.set('search', keyword);
+  if (categoryId) params.set('category_id', categoryId);
+
+  const res = await api.get(`/dashboard/api/products.php?${params}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+
+  const products = res.data;
+
+  // Fill category dropdown filter
+  const filterEl = $('#productCategoryFilter');
+  if (filterEl && filterEl.options.length <= 1) {
+    filterEl.innerHTML = `<option value="">Semua kategori</option>` +
+      _categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+
+  // Fill form category dropdown
+  const formCat = $('#productCategory');
+  if (formCat && formCat.options.length === 0) {
+    formCat.innerHTML = `<option value="">-- Pilih Kategori --</option>` +
+      _categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+
+  $('#productsTable').innerHTML = products.map((p) =>
+    `<tr>
+       <td>
+         <div class="flex items-center gap-3">
+           <img class="h-12 w-12 rounded-xl object-cover" src="${p.image_url || 'https://placehold.co/100'}" loading="lazy" alt="">
+           <div>
+             <p class="font-black">${p.name}</p>
+             <p class="text-xs text-slate-500 dark:text-slate-400">${p.badge || ''}</p>
+           </div>
+         </div>
+       </td>
+       <td>${p.category_name || '—'}</td>
+       <td class="font-bold">${rupiah(p.price)}</td>
+       <td>${p.stock}</td>
+       <td>${badge(p.status)}</td>
+       <td>
+         <div class="flex gap-2">
+           <button class="btn-soft" onclick="editProduct(${p.id})">Edit</button>
+           <button class="btn-soft" onclick="askDeleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Hapus</button>
+         </div>
+       </td>
+     </tr>`
+  ).join('');
+  $('#productsEmpty')?.classList.toggle('hidden', products.length > 0);
 }
 
 function resetProductForm() {
   $('#productForm').reset();
   $('#productId').value = '';
-  $('#productImage').value = 'https://placehold.co/600x400';
+  $('#productImage').value = '';
   $('#productModalTitle').textContent = 'Tambah Produk';
 }
 
-window.editProduct = (id) => {
-  const product = products.find((p) => p.id === id);
-  if (!product) return;
+window.editProduct = async (id) => {
+  const res = await api.get(`/dashboard/api/products.php?id=${id}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const p = res.data;
+  await loadCategoryOptions();
+
   $('#productModalTitle').textContent = 'Edit Produk';
-  $('#productId').value = product.id;
-  $('#productName').value = product.name;
-  $('#productCategory').value = product.category;
-  $('#productPrice').value = product.price;
-  $('#productOriginalPrice').value = product.originalPrice;
-  $('#productStock').value = product.stock;
-  $('#productStatus').value = product.status;
-  $('#productBadge').value = product.badge;
-  $('#productImage').value = product.image;
-  $('#productDescription').value = product.description;
-  $('#productFeatured').checked = product.featured;
+  $('#productId').value              = p.id;
+  $('#productName').value            = p.name;
+  $('#productSlug').value            = p.slug;
+  $('#productPrice').value           = p.price;
+  $('#productOriginalPrice').value   = p.original_price || '';
+  $('#productStock').value           = p.stock;
+  $('#productStatus').value          = p.status;
+  $('#productBadge').value           = p.badge || '';
+  $('#productImage').value           = p.image_url || '';
+  $('#productDescription').value     = p.description || '';
+  $('#productFeatured').checked      = !!p.is_featured;
+
+  const formCat = $('#productCategory');
+  if (formCat) {
+    formCat.innerHTML = `<option value="">-- Pilih Kategori --</option>` +
+      _categories.map((c) => `<option value="${c.id}" ${c.id == p.category_id ? 'selected' : ''}>${c.name}</option>`).join('');
+  }
   openModal('#productModal');
 };
 
-window.askDeleteProduct = (id) => { deleteProductId = id; openModal('#deleteModal'); };
+let _deleteProductId = null;
+window.askDeleteProduct = (id, name) => {
+  _deleteProductId = id;
+  $('#deleteModalName').textContent = name;
+  openModal('#deleteModal');
+};
 
 function initProducts() {
   renderProducts();
   $('#productSearch')?.addEventListener('input', renderProducts);
   $('#productCategoryFilter')?.addEventListener('change', renderProducts);
   $('#addProductBtn')?.addEventListener('click', () => { resetProductForm(); openModal('#productModal'); });
-  $('#productForm')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const id = Number($('#productId').value) || Date.now();
-    const payload = { id, name: $('#productName').value, category: $('#productCategory').value, price: Number($('#productPrice').value), originalPrice: Number($('#productOriginalPrice').value), stock: Number($('#productStock').value), status: $('#productStatus').value, badge: $('#productBadge').value, image: $('#productImage').value, description: $('#productDescription').value, featured: $('#productFeatured').checked };
-    products = products.some((p) => p.id === id) ? products.map((p) => p.id === id ? payload : p) : [payload, ...products];
-    closeModals(); renderProducts();
+
+  // Auto-slug dari nama
+  $('#productName')?.addEventListener('input', () => {
+    if (!$('#productId').value) {
+      $('#productSlug').value = slugify($('#productName').value);
+    }
   });
-  $('#confirmDelete')?.addEventListener('click', () => { products = products.filter((p) => p.id !== deleteProductId); closeModals(); renderProducts(); });
+
+  $('#productForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('#productId').value;
+    const payload = {
+      category_id:    $('#productCategory').value ? parseInt($('#productCategory').value) : null,
+      name:           $('#productName').value,
+      slug:           $('#productSlug').value,
+      description:    $('#productDescription').value,
+      price:          parseInt($('#productPrice').value),
+      original_price: $('#productOriginalPrice').value ? parseInt($('#productOriginalPrice').value) : null,
+      stock:          parseInt($('#productStock').value),
+      image_url:      $('#productImage').value,
+      badge:          $('#productBadge').value,
+      status:         $('#productStatus').value,
+      is_featured:    $('#productFeatured').checked,
+    };
+
+    const res = id
+      ? await api.put(`/dashboard/api/products.php?id=${id}`, payload)
+      : await api.post('/dashboard/api/products.php', payload);
+
+    if (!res.success) {
+      showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error');
+      return;
+    }
+    showToast(res.message);
+    closeModals();
+    renderProducts();
+  });
+
+  $('#confirmDelete')?.addEventListener('click', async () => {
+    if (!_deleteProductId) return;
+    const res = await api.delete(`/dashboard/api/products.php?id=${_deleteProductId}`);
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderProducts();
+    _deleteProductId = null;
+  });
 }
 
-function renderCategories() {
-  $('#categoriesTable').innerHTML = categories.map((cat) => `<tr><td class="font-black"><i class="${cat.icon} mr-2 text-slate-400"></i>${cat.name}</td><td>${cat.slug}</td><td>${products.filter((p) => p.category === cat.name).length}</td><td>${badge(cat.status)}</td><td><button class="btn-soft" onclick="editCategory(${cat.id})"><i class="fa-solid fa-pen mr-1"></i>Edit</button></td></tr>`).join('');
+/* ----------------------------------------------------------------
+ * Categories (categories.php)
+ * --------------------------------------------------------------- */
+async function renderCategories() {
+  const res = await api.get('/dashboard/api/categories.php');
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const cats = res.data;
+
+  $('#categoriesTable').innerHTML = cats.map((c) =>
+    `<tr>
+       <td class="font-black"><i class="${c.icon || 'fa-solid fa-tag'} mr-2 text-slate-400"></i>${c.name}</td>
+       <td>${c.slug}</td>
+       <td>${c.product_count}</td>
+       <td>${badge(c.status)}</td>
+       <td>
+         <div class="flex gap-2">
+           <button class="btn-soft" onclick="editCategory(${c.id})"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
+           <button class="btn-soft" onclick="askDeleteCategory(${c.id}, '${c.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash mr-1"></i>Hapus</button>
+         </div>
+       </td>
+     </tr>`
+  ).join('');
 }
 
-window.editCategory = (id) => {
-  const cat = categories.find((c) => c.id === id);
+window.editCategory = async (id) => {
+  const res = await api.get(`/dashboard/api/categories.php?id=${id}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const c = res.data;
   $('#categoryModalTitle').textContent = 'Edit Kategori';
-  $('#categoryId').value = cat.id;
-  $('#categoryName').value = cat.name;
-  $('#categorySlug').value = cat.slug;
-  $('#categoryIcon').value = cat.icon;
-  $('#categoryStatus').value = cat.status;
+  $('#categoryId').value     = c.id;
+  $('#categoryName').value   = c.name;
+  $('#categorySlug').value   = c.slug;
+  $('#categoryIcon').value   = c.icon || '';
+  $('#categoryStatus').value = c.status;
   openModal('#categoryModal');
+};
+
+let _deleteCategoryId = null;
+window.askDeleteCategory = (id, name) => {
+  _deleteCategoryId = id;
+  $('#deleteCategoryModalName').textContent = name;
+  openModal('#deleteCategoryModal');
 };
 
 function initCategories() {
   renderCategories();
-  $('#addCategoryBtn')?.addEventListener('click', () => { $('#categoryForm').reset(); $('#categoryId').value = ''; $('#categoryModalTitle').textContent = 'Tambah Kategori'; openModal('#categoryModal'); });
-  $('#categoryForm')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const id = Number($('#categoryId').value) || Date.now();
-    const payload = { id, name: $('#categoryName').value, slug: $('#categorySlug').value, icon: $('#categoryIcon').value || 'fa-solid fa-tag', status: $('#categoryStatus').value };
-    categories = categories.some((c) => c.id === id) ? categories.map((c) => c.id === id ? payload : c) : [payload, ...categories];
-    closeModals(); renderCategories();
+  $('#addCategoryBtn')?.addEventListener('click', () => {
+    $('#categoryForm').reset(); $('#categoryId').value = '';
+    $('#categoryModalTitle').textContent = 'Tambah Kategori';
+    openModal('#categoryModal');
+  });
+
+  // Auto-slug
+  $('#categoryName')?.addEventListener('input', () => {
+    if (!$('#categoryId').value) $('#categorySlug').value = slugify($('#categoryName').value);
+  });
+
+  $('#categoryForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('#categoryId').value;
+    const payload = {
+      name:       $('#categoryName').value,
+      slug:       $('#categorySlug').value,
+      icon:       $('#categoryIcon').value || null,
+      status:     $('#categoryStatus').value,
+      sort_order: 0,
+    };
+    const res = id
+      ? await api.put(`/dashboard/api/categories.php?id=${id}`, payload)
+      : await api.post('/dashboard/api/categories.php', payload);
+    if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderCategories();
+    _categories = []; // reset cache
+  });
+
+  $('#confirmDeleteCategory')?.addEventListener('click', async () => {
+    if (!_deleteCategoryId) return;
+    const res = await api.delete(`/dashboard/api/categories.php?id=${_deleteCategoryId}`);
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderCategories();
+    _categories = [];
+    _deleteCategoryId = null;
   });
 }
 
-function renderOrders() {
-  $('#ordersTable').innerHTML = dashboardOrders.map((order) => `<tr><td class="font-black">${order.code}</td><td>${order.customer}</td><td>${order.product}</td><td class="font-bold">${rupiah(order.total)}</td><td>${badge(order.status)}</td><td>${order.date}</td><td><button class="btn-soft" onclick="showOrder(${order.id})">Detail</button></td></tr>`).join('');
+/* ----------------------------------------------------------------
+ * Orders (orders.php)
+ * --------------------------------------------------------------- */
+async function renderOrders() {
+  const statusFilter = $('#orderStatusFilter')?.value || '';
+  const search       = $('#orderSearch')?.value.trim() || '';
+  const params       = new URLSearchParams();
+  if (statusFilter) params.set('status', statusFilter);
+  if (search)       params.set('search', search);
+
+  const res = await api.get(`/dashboard/api/orders.php?${params}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+
+  $('#ordersTable').innerHTML = res.data.map((o) =>
+    `<tr>
+       <td class="font-black">${o.order_code}</td>
+       <td>${o.customer_name}</td>
+       <td class="font-bold">${rupiah(o.total_amount)}</td>
+       <td>${badge(o.status)}</td>
+       <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
+       <td><button class="btn-soft" onclick="showOrder(${o.id})">Detail</button></td>
+     </tr>`
+  ).join('') || '<tr><td colspan="6" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
 }
 
-window.showOrder = (id) => {
-  const order = dashboardOrders.find((item) => item.id === id);
-  $('#orderDetail').innerHTML = Object.entries({ 'Kode Order': order.code, Customer: order.customer, Email: order.email, 'Nomor HP': order.phone, Produk: order.product, Total: rupiah(order.total), Pembayaran: order.method, Status: order.status, Tanggal: order.date }).map(([key, value]) => `<div class="flex justify-between gap-4 border-b border-slate-200 pb-2 dark:border-slate-800"><span class="font-bold text-slate-500 dark:text-slate-400">${key}</span><span class="text-right font-black">${value}</span></div>`).join('');
+window.showOrder = async (id) => {
+  const res = await api.get(`/dashboard/api/orders.php?id=${id}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const o = res.data;
+
+  const fields = [
+    ['Kode Order',  o.order_code],
+    ['Customer',    o.customer_name],
+    ['Email',       o.customer_email || '—'],
+    ['Nomor HP',    o.customer_phone || '—'],
+    ['Total',       rupiah(o.total_amount)],
+    ['Pembayaran',  o.payment_method || '—'],
+    ['Status',      badge(o.status)],
+    ['Catatan',     o.note || '—'],
+    ['Tanggal',     o.created_at?.slice(0, 10) || ''],
+  ];
+  $('#orderDetail').innerHTML = fields.map(([k, v]) =>
+    `<div class="flex justify-between gap-4 border-b border-slate-200 pb-2 dark:border-slate-800">
+       <span class="font-bold text-slate-500 dark:text-slate-400">${k}</span>
+       <span class="text-right font-black">${v}</span>
+     </div>`
+  ).join('');
+
+  if (o.items?.length) {
+    $('#orderDetail').innerHTML += `
+      <p class="mt-3 font-black">Produk:</p>
+      ${o.items.map((i) => `
+        <div class="flex justify-between gap-4 border-b border-slate-100 py-1 dark:border-slate-800 text-sm">
+          <span>${i.product_name} x${i.quantity}</span>
+          <span class="font-bold">${rupiah(i.subtotal)}</span>
+        </div>`).join('')}`;
+  }
+
+  // Update status selector
+  $('#orderStatusSelect').value   = o.status;
+  $('#orderStatusSelect').dataset.id = o.id;
   openModal('#orderModal');
 };
 
-function renderTestimonials() {
-  $('#testimonialsTable').innerHTML = dashboardTestimonials.map((item) => `<tr><td class="font-black">${item.name}</td><td>${item.role}</td><td>${'<i class="fa-solid fa-star text-yellow-400"></i>'.repeat(item.rating)}</td><td>${item.message}</td><td>${badge(item.status)}</td><td><button class="btn-soft" onclick="alert('Edit: ${item.name}')"><i class="fa-solid fa-pen mr-1"></i>Edit</button></td></tr>`).join('');
+function initOrders() {
+  renderOrders();
+  $('#orderStatusFilter')?.addEventListener('change', renderOrders);
+  $('#orderSearch')?.addEventListener('input', renderOrders);
+
+  $('#saveOrderStatus')?.addEventListener('click', async () => {
+    const id     = $('#orderStatusSelect').dataset.id;
+    const status = $('#orderStatusSelect').value;
+    const res    = await api.put(`/dashboard/api/orders.php?id=${id}`, { status });
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderOrders();
+  });
 }
 
-function initSettings() {
-  $('#settingsForm')?.addEventListener('submit', (event) => { event.preventDefault(); alert('Setting tersimpan sementara.'); });
+/* ----------------------------------------------------------------
+ * Testimonials (testimonials.php)
+ * --------------------------------------------------------------- */
+async function renderTestimonials() {
+  const res = await api.get('/dashboard/api/testimonials.php');
+  if (!res.success) { showToast(res.message, 'error'); return; }
+
+  $('#testimonialsTable').innerHTML = res.data.map((t) =>
+    `<tr>
+       <td class="font-black">${t.name}</td>
+       <td>${t.role || '—'}</td>
+       <td>${'<i class="fa-solid fa-star text-yellow-400"></i>'.repeat(t.rating)}</td>
+       <td class="max-w-[200px] truncate">${t.message}</td>
+       <td>${badge(t.status)}</td>
+       <td>
+         <div class="flex gap-2">
+           <button class="btn-soft" onclick="editTestimonial(${t.id})"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
+           <button class="btn-soft" onclick="askDeleteTestimonial(${t.id}, '${t.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash mr-1"></i>Hapus</button>
+         </div>
+       </td>
+     </tr>`
+  ).join('') || '<tr><td colspan="6" class="text-center text-slate-400">Belum ada testimoni.</td></tr>';
 }
 
+window.editTestimonial = async (id) => {
+  const res = await api.get(`/dashboard/api/testimonials.php?id=${id}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const t = res.data;
+  $('#testimonialModalTitle').textContent = 'Edit Testimoni';
+  $('#testimonialId').value      = t.id;
+  $('#testimonialName').value    = t.name;
+  $('#testimonialRole').value    = t.role || '';
+  $('#testimonialRating').value  = t.rating;
+  $('#testimonialMessage').value = t.message;
+  $('#testimonialStatus').value  = t.status;
+  openModal('#testimonialModal');
+};
+
+let _deleteTestimonialId = null;
+window.askDeleteTestimonial = (id, name) => {
+  _deleteTestimonialId = id;
+  $('#deleteTestimonialModalName').textContent = name;
+  openModal('#deleteTestimonialModal');
+};
+
+function initTestimonials() {
+  renderTestimonials();
+  $('#addTestimonialBtn')?.addEventListener('click', () => {
+    $('#testimonialForm').reset();
+    $('#testimonialId').value = '';
+    $('#testimonialModalTitle').textContent = 'Tambah Testimoni';
+    openModal('#testimonialModal');
+  });
+
+  $('#testimonialForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('#testimonialId').value;
+    const payload = {
+      name:    $('#testimonialName').value,
+      role:    $('#testimonialRole').value || null,
+      rating:  parseInt($('#testimonialRating').value),
+      message: $('#testimonialMessage').value,
+      status:  $('#testimonialStatus').value,
+    };
+    const res = id
+      ? await api.put(`/dashboard/api/testimonials.php?id=${id}`, payload)
+      : await api.post('/dashboard/api/testimonials.php', payload);
+    if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderTestimonials();
+  });
+
+  $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
+    if (!_deleteTestimonialId) return;
+    const res = await api.delete(`/dashboard/api/testimonials.php?id=${_deleteTestimonialId}`);
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderTestimonials();
+    _deleteTestimonialId = null;
+  });
+}
+
+/* ----------------------------------------------------------------
+ * Settings (settings.php)
+ * --------------------------------------------------------------- */
+async function initSettings() {
+  const res = await api.get('/dashboard/api/settings.php');
+  if (res.success) {
+    const d = res.data;
+    $('#settingStoreName').value        = d.store_name        || '';
+    $('#settingStoreTagline').value     = d.store_tagline     || '';
+    $('#settingStoreDescription').value = d.store_description || '';
+    $('#settingWhatsapp').value         = d.store_whatsapp    || '';
+    $('#settingEmail').value            = d.store_email       || '';
+    $('#settingInstagram').value        = d.store_instagram   || '';
+    $('#settingTheme').value            = d.default_theme     || 'light';
+    $('#settingAccentColor').value      = d.accent_color      || '#2563EB';
+  }
+
+  $('#settingsForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      store_name:        $('#settingStoreName').value,
+      store_tagline:     $('#settingStoreTagline').value,
+      store_description: $('#settingStoreDescription').value,
+      store_whatsapp:    $('#settingWhatsapp').value,
+      store_email:       $('#settingEmail').value,
+      store_instagram:   $('#settingInstagram').value,
+      default_theme:     $('#settingTheme').value,
+      accent_color:      $('#settingAccentColor').value,
+    };
+    const res = await api.put('/dashboard/api/settings.php', payload);
+    if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
+    showToast(res.message);
+  });
+}
+
+/* ----------------------------------------------------------------
+ * Init
+ * --------------------------------------------------------------- */
 initShell();
 const page = $('[data-page]')?.dataset.page;
-if (page === 'overview') renderOverview();
-if (page === 'products') initProducts();
-if (page === 'categories') initCategories();
-if (page === 'orders') renderOrders();
-if (page === 'testimonials') renderTestimonials();
-if (page === 'settings') initSettings();
+if (page === 'overview')     renderOverview();
+if (page === 'products')     initProducts();
+if (page === 'categories')   initCategories();
+if (page === 'orders')       initOrders();
+if (page === 'testimonials') initTestimonials();
+if (page === 'settings')     initSettings();
