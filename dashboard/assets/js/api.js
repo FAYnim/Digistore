@@ -5,6 +5,34 @@
 
 const API_BASE = 'api';
 
+let activeRequests = 0;
+
+function showLoader() {
+  activeRequests++;
+  let loader = document.getElementById('global-api-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'global-api-loader';
+    loader.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm transition-opacity duration-200';
+    loader.innerHTML = '<div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 dark:border-slate-700 dark:border-t-blue-500"></div>';
+    document.body.appendChild(loader);
+  }
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+
+function hideLoader() {
+  activeRequests--;
+  if (activeRequests <= 0) {
+    activeRequests = 0;
+    const loader = document.getElementById('global-api-loader');
+    if (loader) {
+      loader.style.opacity = '0';
+      loader.style.pointerEvents = 'none';
+    }
+  }
+}
+
 /**
  * Request ke API, return JSON
  * @param {string} url  - Endpoint (relatif dari API_BASE atau path penuh)
@@ -17,6 +45,8 @@ async function apiRequest(url, opts = {}) {
   }
   
   const fullUrl = url.startsWith('/') || url.startsWith('http') ? url : url;
+  
+  showLoader();
   try {
     const res = await fetch(fullUrl, {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -27,6 +57,8 @@ async function apiRequest(url, opts = {}) {
   } catch (err) {
     console.error('[API Error]', err);
     return { success: false, message: 'Gagal terhubung ke server', data: null, errors: null };
+  } finally {
+    hideLoader();
   }
 }
 
