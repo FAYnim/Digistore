@@ -3,7 +3,7 @@
  * Menggantikan dashboard-data.js (dummy data)
  */
 
-const API_BASE = '/dashboard/api';
+const API_BASE = 'api';
 
 /**
  * Request ke API, return JSON
@@ -11,7 +11,12 @@ const API_BASE = '/dashboard/api';
  * @param {object} opts - Fetch options (method, body, dll)
  */
 async function apiRequest(url, opts = {}) {
-  const fullUrl = url.startsWith('/') ? url : `${API_BASE}/${url}`;
+  // Ubah absolute path (jika ada) ke relative path agar aman saat diakses dari sub-folder
+  if (url.startsWith('/dashboard/api/')) {
+    url = url.replace('/dashboard/api/', 'api/');
+  }
+  
+  const fullUrl = url.startsWith('/') || url.startsWith('http') ? url : url;
   try {
     const res = await fetch(fullUrl, {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
