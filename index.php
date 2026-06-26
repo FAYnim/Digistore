@@ -45,9 +45,7 @@
     <section id="produk" class="section catalog-first">
       <div class="orb orb-a"></div><div class="orb orb-b"></div>
       <div class="section-head catalog-head">
-        <span data-store-tagline>Produk Digital Premium</span>
         <h1 data-store-headline>Dapatkan Akun Premium Terpercaya</h1>
-        <p data-store-description>Platform katalog produk digital sederhana untuk kebutuhan digitalmu.</p>
       </div>
       <div class="catalog-toolbar">
         <label class="sr-only" for="searchInput">Cari produk</label>

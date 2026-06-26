@@ -122,7 +122,6 @@ function renderSettings() {
   const description = settings.store_description || "Platform katalog produk digital sederhana.";
   $$('[data-store-name]').forEach((el) => { el.textContent = storeName; });
   $$('[data-store-description]').forEach((el) => { el.textContent = description; });
-  $('[data-store-tagline]').textContent = settings.store_tagline || "Produk Digital Premium";
   $('[data-store-headline]').textContent = settings.store_tagline || "Dapatkan Akun Premium Terpercaya";
   $('[data-store-email]').textContent = settings.store_email || "Email belum tersedia";
   $('[data-store-whatsapp]').textContent = settings.store_whatsapp ? `WhatsApp ${settings.store_whatsapp}` : "WhatsApp belum tersedia";
