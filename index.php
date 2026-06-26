@@ -30,7 +30,6 @@
       </div>
       <div class="flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
-        <button class="cart-btn" type="button" aria-label="Keranjang dummy"><i class="fa-solid fa-cart-shopping"></i> <span>2</span></button>
         <button id="menuToggle" class="icon-btn md:hidden" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
       </div>
     </nav>
@@ -45,7 +44,7 @@
     <section id="produk" class="section catalog-first">
       <div class="orb orb-a"></div><div class="orb orb-b"></div>
       <div class="section-head catalog-head">
-        <h1 data-store-headline>Dapatkan Akun Premium Terpercaya</h1>
+        <!-- <h1 data-store-headline>Dapatkan Akun Premium Terpercaya</h1> -->
       </div>
       <div class="catalog-toolbar">
         <label class="sr-only" for="searchInput">Cari produk</label>
