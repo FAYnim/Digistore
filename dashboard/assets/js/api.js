@@ -52,6 +52,11 @@ async function apiRequest(url, opts = {}) {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       ...opts,
     });
+    if (res.status === 401) {
+      window.location.href = 'login.php';
+      return { success: false, message: 'Unauthorized', data: null, errors: null };
+    }
+
     const json = await res.json();
     return json;
   } catch (err) {

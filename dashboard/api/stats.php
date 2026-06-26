@@ -4,6 +4,7 @@
  * GET /dashboard/api/stats.php   — statistik ringkasan untuk overview dashboard
  */
 
+require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
 
 if (strtoupper($_SERVER['REQUEST_METHOD']) !== 'GET') {

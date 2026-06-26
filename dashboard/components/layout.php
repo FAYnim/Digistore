@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../auth/check-auth.php';
+
 function renderHeader($pageTitle, $activePage) {
 ?>
 <!doctype html>

@@ -8,6 +8,7 @@
  * DELETE /dashboard/api/categories.php?id=N    — hapus kategori
  */
 
+require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
 
 $method = strtoupper($_SERVER['REQUEST_METHOD']);
