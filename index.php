@@ -16,26 +16,29 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased">
-  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[color:var(--surface-glass)] backdrop-blur-xl">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8" aria-label="Navigasi utama">
-      <a href="#produk" class="flex items-center gap-3 font-display text-xl font-extrabold tracking-tight">
-        <span class="grid h-10 w-10 place-items-center rounded-xl bg-[var(--accent)] text-white shadow-brand">D</span>
+  <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
+    <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi utama">
+      <a href="#produk" class="brand-pill">
+        <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span data-store-name>DigiStore</span>
       </a>
-      <div class="hidden items-center gap-8 text-sm font-semibold text-[var(--muted)] md:flex">
-        <a class="nav-link" href="#produk">Katalog</a>
-        <a class="nav-link" href="#unggulan">Unggulan</a>
-        <a class="nav-link" href="#testimoni">Testimoni</a>
-        <a class="nav-link" href="#kontak">Kontak</a>
+      <div class="nav-shell hidden md:flex">
+        <a class="nav-link active" href="#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link" href="#unggulan"><i class="fa-regular fa-star"></i><span>Unggulan</span></a>
+        <a class="nav-link" href="#testimoni"><i class="fa-regular fa-comments"></i><span>Testimoni</span></a>
+        <a class="nav-link" href="#kontak"><i class="fa-regular fa-paper-plane"></i><span>Kontak</span></a>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="ml-auto flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
         <button id="menuToggle" class="icon-btn md:hidden" type="button" aria-label="Buka menu"><i class="fa-solid fa-bars"></i></button>
       </div>
     </nav>
-    <div id="mobileMenu" class="hidden border-t border-[var(--border)] px-4 py-3 md:hidden">
-      <div class="grid gap-3 text-sm font-semibold text-[var(--muted)]">
-        <a href="#produk">Katalog</a><a href="#unggulan">Unggulan</a><a href="#testimoni">Testimoni</a><a href="#kontak">Kontak</a>
+    <div id="mobileMenu" class="mobile-menu hidden md:hidden">
+      <div class="grid gap-2 text-sm font-semibold">
+        <a class="nav-link active" href="#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link" href="#unggulan"><i class="fa-regular fa-star"></i><span>Unggulan</span></a>
+        <a class="nav-link" href="#testimoni"><i class="fa-regular fa-comments"></i><span>Testimoni</span></a>
+        <a class="nav-link" href="#kontak"><i class="fa-regular fa-paper-plane"></i><span>Kontak</span></a>
       </div>
     </div>
   </header>

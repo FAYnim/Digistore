@@ -153,6 +153,30 @@ function updateThemeIcon() {
   $("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
 }
 
+function setActiveNav(hash) {
+  $$('.nav-link[href^="#"]').forEach((link) => link.classList.toggle("active", link.getAttribute("href") === hash));
+}
+
+function initNavSpy() {
+  const links = [...$$('.nav-link[href^="#"]')];
+  const sections = links.map((link) => $(link.getAttribute("href"))).filter(Boolean);
+
+  links.forEach((link) => {
+    link.addEventListener("click", () => {
+      setActiveNav(link.getAttribute("href"));
+      $("#mobileMenu")?.classList.add("hidden");
+    });
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) setActiveNav(`#${entry.target.id}`);
+    });
+  }, { rootMargin: "-35% 0px -55% 0px", threshold: 0 });
+
+  sections.forEach((section) => observer.observe(section));
+}
+
 async function loadLandingData() {
   setLoading();
   const [settings, categories, products, featured, testimonials] = await Promise.all([
@@ -199,4 +223,5 @@ document.addEventListener("click", (event) => {
 });
 
 applyTheme();
+initNavSpy();
 loadLandingData();
