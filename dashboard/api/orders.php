@@ -45,7 +45,7 @@ switch ($method) {
         $conditions = [];
         $params     = [];
 
-        if (!empty($_GET['status']) && in_array($_GET['status'], $validStatuses)) {
+        if (!empty($_GET['status']) && in_array($_GET['status'], $validStatuses, true)) {
             $conditions[] = 'o.status = ?';
             $params[]     = $_GET['status'];
         }
@@ -85,7 +85,7 @@ switch ($method) {
 
         $body = json_body();
         if (empty($body['status'])) json_error('status wajib diisi', null, 422);
-        if (!in_array($body['status'], $validStatuses)) {
+        if (!in_array($body['status'], $validStatuses, true)) {
             json_error('status hanya boleh: ' . implode(', ', $validStatuses), null, 422);
         }
         $deliveryNote = isset($body['delivery_note']) ? trim((string) $body['delivery_note']) : null;

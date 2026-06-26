@@ -98,5 +98,6 @@ try {
 
     json_success('Produk berhasil dimuat', $rows);
 } catch (PDOException $e) {
+    error_log('Product listing failed: ' . $e->getMessage());
     json_error('Gagal memuat produk', null, 500);
 }
