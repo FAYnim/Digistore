@@ -46,7 +46,8 @@ renderHeader($pageTitle, $activePage);
         <h3 class="font-black">WhatsApp Konfirmasi</h3>
         <label>Nomor WhatsApp Admin<input class="input mt-1" id="paymentAdminWhatsapp" placeholder="6281234567890" type="tel"></label>
         <label>Template Pesan<textarea class="textarea mt-1" id="paymentWhatsappMessage" rows="3" placeholder="Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek."></textarea></label>
-        <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Variabel: {order_code}, {customer_name}, {total_amount}</p>
+        <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Variabel: {order_code}, {customer_name}, {total_amount}, {status}</p>
+        <p class="hidden text-xs font-bold text-amber-600" id="paymentWhatsappWarning">Disarankan memakai {order_code}.</p>
         <button class="btn-primary w-full" type="submit">Simpan</button>
       </div>
     </form>
@@ -57,4 +58,5 @@ renderHeader($pageTitle, $activePage);
     </aside>
   </div>
 </section>
+<script src="../assets/js/whatsapp.js"></script>
 <?php renderFooter(); ?>

@@ -46,7 +46,8 @@ switch ($method) {
         $bankEnabled = (string) ($body['payment_bank_enabled'] ?? '');
         $qrisImage = trim((string) ($body['payment_qris_image'] ?? ''));
         $instruction = trim((string) ($body['payment_instruction'] ?? ''));
-        $adminWhatsapp = trim((string) ($body['payment_admin_whatsapp'] ?? ''));
+        $adminWhatsapp = preg_replace('/\D+/', '', trim((string) ($body['payment_admin_whatsapp'] ?? '')));
+        if (str_starts_with($adminWhatsapp, '0')) $adminWhatsapp = '62' . substr($adminWhatsapp, 1);
         $bankName = trim((string) ($body['payment_bank_name'] ?? ''));
         $bankAccount = trim((string) ($body['payment_bank_account'] ?? ''));
         $bankHolder = trim((string) ($body['payment_bank_holder'] ?? ''));
@@ -58,6 +59,7 @@ switch ($method) {
         if ($instruction === '') $errors[] = 'Instruksi pembayaran wajib diisi';
         if ($adminWhatsapp === '') $errors[] = 'Nomor WhatsApp admin wajib diisi';
         if ($adminWhatsapp !== '' && !ctype_digit($adminWhatsapp)) $errors[] = 'Nomor WhatsApp admin hanya boleh angka';
+        if ($adminWhatsapp !== '' && (strlen($adminWhatsapp) < 10 || strlen($adminWhatsapp) > 15)) $errors[] = 'Nomor WhatsApp admin harus 10-15 digit';
         if ($bankEnabled === '1' && $bankName === '') $errors[] = 'Nama bank wajib diisi';
         if ($bankEnabled === '1' && $bankAccount === '') $errors[] = 'Nomor rekening wajib diisi';
         if ($bankEnabled === '1' && $bankHolder === '') $errors[] = 'Nama pemilik rekening wajib diisi';
@@ -68,6 +70,8 @@ switch ($method) {
         foreach ($allowedKeys as $key) {
             $payload[$key] = trim((string) ($body[$key] ?? $defaults[$key]));
         }
+        $payload['payment_admin_whatsapp'] = $adminWhatsapp;
+        if ($payload['payment_whatsapp_message'] === '') $payload['payment_whatsapp_message'] = $defaults['payment_whatsapp_message'];
 
         $stmt = $pdo->prepare(
             'INSERT INTO store_settings (setting_key, setting_value)

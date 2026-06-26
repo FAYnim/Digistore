@@ -50,6 +50,7 @@
   </main>
 
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/whatsapp.js"></script>
   <script>
     const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
     const code = new URLSearchParams(window.location.search).get("code");
@@ -84,9 +85,10 @@
       const itemNames = (order.items || []).map((item) => escapeText(item.product_name)).join(", ");
       const payment = order.payment || {};
       const hasMethod = payment.qris_enabled || payment.bank_enabled;
-      const message = payment.whatsapp_message || "Halo admin, saya sudah membuat pesanan " + order.order_code + ". Mohon dicek.";
-      const waText = encodeURIComponent(message);
-      const waLink = payment.admin_whatsapp ? `https://wa.me/${payment.admin_whatsapp}?text=${waText}` : "#";
+      const orderForMessage = { ...order, status_label: statusLabels[order.status] || order.status };
+      const message = buildWhatsAppMessage(payment.whatsapp_message, orderForMessage);
+      const waLink = buildWhatsAppLink(payment.admin_whatsapp, message);
+      const hasWhatsapp = waLink !== "";
 
       document.querySelector("#orderDetail").innerHTML = `
         <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
@@ -107,7 +109,7 @@
         ${payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
         <p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(payment.instruction || "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.")}</p>
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
-          <a class="primary-btn text-center ${payment.admin_whatsapp ? '' : 'pointer-events-none opacity-50'}" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>
+          ${hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
           <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
           <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
         </div>

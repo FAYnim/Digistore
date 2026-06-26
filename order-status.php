@@ -46,6 +46,7 @@
   </main>
 
   <script src="assets/js/api.js"></script>
+  <script src="assets/js/whatsapp.js"></script>
   <script src="assets/js/order-status.js"></script>
 </body>
 </html>

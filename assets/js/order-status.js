@@ -59,16 +59,16 @@ function getStatusInstruction(order) {
 
 function buildWhatsappLink(order) {
   const payment = order.payment || {};
-  if (!payment.admin_whatsapp) return "#";
-  const message = payment.whatsapp_message || `Halo admin, saya ingin mengecek pesanan ${order.order_code}.`;
-  return `https://wa.me/${encodeURIComponent(payment.admin_whatsapp)}?text=${encodeURIComponent(message)}`;
+  const orderForMessage = { ...order, status_label: statusLabels[order.status] || order.status };
+  const message = buildWhatsAppMessage(payment.whatsapp_message, orderForMessage);
+  return buildWhatsAppLink(payment.admin_whatsapp, message) || "#";
 }
 
 function renderActions(order) {
   const waLink = buildWhatsappLink(order);
   const hasWhatsapp = waLink !== "#";
   const whatsappLabel = order.status === "pending" ? "Konfirmasi WhatsApp" : "Hubungi Admin";
-  const whatsappButton = `<a class="primary-btn text-center ${hasWhatsapp ? "" : "pointer-events-none opacity-50"}" href="${waLink}" target="_blank" rel="noopener">${whatsappLabel}</a>`;
+  const whatsappButton = hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">${whatsappLabel}</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>';
   const catalogButton = '<a class="small-btn text-center" href="index.php#produk">Kembali ke Katalog</a>';
 
   if (order.status === "pending") {
