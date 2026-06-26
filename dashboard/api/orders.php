@@ -3,7 +3,7 @@
  * API: Orders
  * GET    /dashboard/api/orders.php              — list pesanan (+ filter: status, search)
  * GET    /dashboard/api/orders.php?id=N         — detail pesanan + order items
- * PUT    /dashboard/api/orders.php?id=N         — update status pesanan
+ * PUT    /dashboard/api/orders.php?id=N         — update status dan delivery note pesanan
  */
 
 require_once __DIR__ . '/../auth/check-auth.php';
@@ -41,24 +41,27 @@ switch ($method) {
         $params     = [];
 
         if (!empty($_GET['status']) && in_array($_GET['status'], $validStatuses)) {
-            $conditions[] = 'status = ?';
+            $conditions[] = 'o.status = ?';
             $params[]     = $_GET['status'];
         }
         if (!empty($_GET['search'])) {
-            $conditions[] = '(order_code LIKE ? OR customer_name LIKE ? OR customer_email LIKE ?)';
+            $conditions[] = '(o.order_code LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ? OR o.customer_phone LIKE ?)';
             $keyword      = '%' . $_GET['search'] . '%';
+            $params[]     = $keyword;
             $params[]     = $keyword;
             $params[]     = $keyword;
             $params[]     = $keyword;
         }
 
         $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        $stmt  = $pdo->prepare("SELECT * FROM orders $where ORDER BY created_at DESC");
+        $stmt  = $pdo->prepare("SELECT o.*, COALESCE(oi.items_count, 0) AS items_count, oi.items_summary FROM orders o LEFT JOIN (SELECT order_id, COUNT(id) AS items_count, GROUP_CONCAT(product_name ORDER BY id SEPARATOR ', ') AS items_summary FROM order_items GROUP BY order_id) oi ON oi.order_id = o.id $where ORDER BY o.created_at DESC");
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         foreach ($rows as &$row) {
             $row['total_amount'] = (int) $row['total_amount'];
+            $row['items_count'] = (int) $row['items_count'];
+            $row['items_summary'] = $row['items_count'] > 1 ? $row['items_count'] . ' produk' : ($row['items_summary'] ?: '—');
         }
         unset($row);
 
@@ -80,9 +83,10 @@ switch ($method) {
         if (!in_array($body['status'], $validStatuses)) {
             json_error('status hanya boleh: ' . implode(', ', $validStatuses), null, 422);
         }
+        $deliveryNote = isset($body['delivery_note']) ? trim((string) $body['delivery_note']) : null;
 
-        $stmt = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
-        $stmt->execute([$body['status'], $id]);
+        $stmt = $pdo->prepare('UPDATE orders SET status = ?, delivery_note = ? WHERE id = ?');
+        $stmt->execute([$body['status'], $deliveryNote, $id]);
 
         $updated = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
         $updated->execute([$id]);

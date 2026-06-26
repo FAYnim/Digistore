@@ -87,7 +87,7 @@
             <p><b>Total:</b> ${rupiah.format(Number(order.total_amount || 0))}</p>
             <p><b>Tanggal:</b> ${escapeText(order.created_at)}</p>
             <ul class="list-disc pl-5">${items}</ul>
-            ${order.delivery_note ? `<p><b>Catatan Admin:</b> ${escapeText(order.delivery_note)}</p>` : ""}
+            ${order.status === "completed" && order.delivery_note ? `<p><b>Catatan Admin:</b> ${escapeText(order.delivery_note)}</p>` : ""}
           </div>
         </div>
       `;

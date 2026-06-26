@@ -359,12 +359,13 @@ async function renderOrders() {
     `<tr>
        <td class="font-black">${o.order_code}</td>
        <td>${o.customer_name}</td>
+       <td>${o.items_summary || '—'}</td>
        <td class="font-bold">${rupiah(o.total_amount)}</td>
        <td>${badge(o.status)}</td>
        <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
        <td><button class="btn-soft" onclick="showOrder(${o.id})">Detail</button></td>
      </tr>`
-  ).join('') || '<tr><td colspan="6" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
+  ).join('') || '<tr><td colspan="7" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
 }
 
 window.showOrder = async (id) => {
@@ -402,9 +403,9 @@ window.showOrder = async (id) => {
       </div>`;
   }
 
-  // Update status selector
-  $('#orderStatusSelect').value   = o.status;
+  $('#orderStatusSelect').value = o.status;
   $('#orderStatusSelect').dataset.id = o.id;
+  $('#orderDeliveryNote').value = o.delivery_note || '';
   openModal('#orderModal');
 };
 
@@ -414,9 +415,10 @@ function initOrders() {
   $('#orderSearch')?.addEventListener('input', renderOrders);
 
   $('#saveOrderStatus')?.addEventListener('click', async () => {
-    const id     = $('#orderStatusSelect').dataset.id;
+    const id = $('#orderStatusSelect').dataset.id;
     const status = $('#orderStatusSelect').value;
-    const res    = await api.put(`/dashboard/api/orders.php?id=${id}`, { status });
+    const delivery_note = $('#orderDeliveryNote').value.trim();
+    const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { status, delivery_note });
     if (!res.success) { showToast(res.message, 'error'); return; }
     showToast(res.message);
     closeModals();
