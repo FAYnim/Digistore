@@ -39,11 +39,11 @@
 
     <div id="message" class="mb-6 hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm font-bold text-[var(--danger)]"></div>
 
-    <div class="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
-      <section id="orderDetail" class="modal-card">
+    <div class="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+      <section id="orderDetail" class="modal-card w-full">
         <h2 class="font-display text-2xl font-extrabold">Memuat pesanan...</h2>
       </section>
-      <section id="paymentCard" class="modal-card text-center">
+      <section id="paymentCard" class="modal-card w-full text-center">
         <h2 class="font-display text-2xl font-extrabold">Memuat QRIS...</h2>
       </section>
     </div>
