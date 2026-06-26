@@ -9,7 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark" || (!savedTheme && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -20,7 +24,10 @@
         <span class="grid h-10 w-10 place-items-center rounded-xl bg-[var(--accent)] text-white shadow-brand">D</span>
         <span>DigiStore</span>
       </a>
-      <a class="small-btn" href="index.php#produk">Katalog</a>
+      <div class="flex items-center gap-2">
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
+        <a class="small-btn" href="index.php#produk">Katalog</a>
+      </div>
     </nav>
   </header>
 
@@ -53,7 +60,19 @@
       document.querySelector("#message").classList.remove("hidden");
     }
 
+    function hideMessage() {
+      document.querySelector("#message").classList.add("hidden");
+      document.querySelector("#message").textContent = "";
+    }
+
+    function updateThemeIcon() {
+      const isDark = document.documentElement.classList.contains("dark");
+      document.querySelector("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
+    }
+
     async function loadStatus(orderCode) {
+      hideMessage();
+      document.querySelector("#statusResult").innerHTML = "";
       const res = await apiGet(`/orders.php?code=${encodeURIComponent(orderCode)}`);
       if (!res.success) return showMessage(res.message || "Order tidak ditemukan.");
 
@@ -74,11 +93,19 @@
       `;
     }
 
+    document.querySelector("#themeToggle").addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      localStorage.setItem("theme", document.documentElement.classList.contains("dark") ? "dark" : "light");
+      updateThemeIcon();
+    });
     document.querySelector("#statusForm").addEventListener("submit", (event) => {
       event.preventDefault();
       const value = document.querySelector("#orderCode").value.trim();
-      if (value) window.location.href = `order-status.php?code=${encodeURIComponent(value)}`;
+      if (!value) return showMessage("Kode order wajib diisi.");
+      history.replaceState(null, "", `order-status.php?code=${encodeURIComponent(value)}`);
+      loadStatus(value);
     });
+    updateThemeIcon();
 
     if (code) {
       document.querySelector("#orderCode").value = code;
