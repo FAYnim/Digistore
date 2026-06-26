@@ -23,12 +23,12 @@ renderHeader($pageTitle, $activePage);
 
 <!-- Modal Detail Order -->
 <div class="modal fixed inset-0 z-50 place-items-center bg-slate-950/60 p-4" id="orderModal">
-  <div class="card w-full max-w-xl p-5">
+  <div class="card w-full max-w-4xl p-5">
     <div class="mb-4 flex items-center justify-between">
       <h3 class="text-xl font-black">Detail Order</h3>
       <button class="btn-soft" data-close-modal type="button">Tutup</button>
     </div>
-    <div class="grid gap-3 text-sm" id="orderDetail"></div>
+    <div class="grid gap-3 text-sm md:grid-cols-2" id="orderDetail"></div>
     <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
       <label class="font-bold">Ubah Status
         <select class="select mt-1" id="orderStatusSelect">

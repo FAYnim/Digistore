@@ -392,12 +392,14 @@ window.showOrder = async (id) => {
 
   if (o.items?.length) {
     $('#orderDetail').innerHTML += `
-      <p class="mt-3 font-black">Produk:</p>
-      ${o.items.map((i) => `
-        <div class="flex justify-between gap-4 border-b border-slate-100 py-1 dark:border-slate-800 text-sm">
-          <span>${i.product_name} x${i.quantity}</span>
-          <span class="font-bold">${rupiah(i.subtotal)}</span>
-        </div>`).join('')}`;
+      <div class="md:col-span-2 mt-3">
+        <p class="mb-2 font-black">Produk:</p>
+        ${o.items.map((i) => `
+          <div class="flex justify-between gap-4 border-b border-slate-100 py-1 dark:border-slate-800 text-sm">
+            <span>${i.product_name} x${i.quantity}</span>
+            <span class="font-bold">${rupiah(i.subtotal)}</span>
+          </div>`).join('')}
+      </div>`;
   }
 
   // Update status selector
