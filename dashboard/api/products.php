@@ -19,6 +19,40 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
     csrf_validate_request();
 }
 
+function validate_product_payload(array $body, bool $partial = false): array
+{
+    $errors = [];
+    $status = ['active', 'draft', 'out_of_stock'];
+
+    if (!$partial || array_key_exists('name', $body)) {
+        $name = trim((string) ($body['name'] ?? ''));
+        if ($name === '') $errors[] = $partial ? 'name tidak boleh kosong' : 'name wajib diisi';
+        if (strlen($name) > 150) $errors[] = 'name maksimal 150 karakter';
+    }
+    if (!$partial || array_key_exists('slug', $body)) {
+        $slug = trim((string) ($body['slug'] ?? ''));
+        if ($slug === '') $errors[] = $partial ? 'slug tidak boleh kosong' : 'slug wajib diisi';
+        if ($slug !== '' && !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) $errors[] = 'slug tidak valid';
+        if (strlen($slug) > 180) $errors[] = 'slug maksimal 180 karakter';
+    }
+    if (!$partial || array_key_exists('price', $body)) {
+        if (!isset($body['price']) || !is_numeric($body['price']) || (int) $body['price'] < 0) $errors[] = 'price wajib angka positif';
+    }
+    if (!$partial || array_key_exists('stock', $body)) {
+        if (!isset($body['stock']) || !is_numeric($body['stock']) || (int) $body['stock'] < 0) $errors[] = 'stock wajib angka positif';
+    }
+    if (array_key_exists('original_price', $body) && $body['original_price'] !== null && $body['original_price'] !== '' && (!is_numeric($body['original_price']) || (int) $body['original_price'] < 0)) $errors[] = 'original_price wajib angka positif';
+    if (array_key_exists('status', $body) && !in_array($body['status'], $status, true)) $errors[] = 'status hanya boleh: active, draft, out_of_stock';
+    if (array_key_exists('image_url', $body) && trim((string) $body['image_url']) !== '') {
+        $url = trim((string) $body['image_url']);
+        if (strlen($url) > 255 || !filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') $errors[] = 'image_url harus URL https valid maksimal 255 karakter';
+    }
+    if (array_key_exists('badge', $body) && strlen(trim((string) $body['badge'])) > 50) $errors[] = 'badge maksimal 50 karakter';
+    if (array_key_exists('description', $body) && strlen(trim((string) $body['description'])) > 5000) $errors[] = 'description maksimal 5000 karakter';
+
+    return $errors;
+}
+
 switch ($method) {
 
     // ----------------------------------------------------------------
@@ -56,7 +90,7 @@ switch ($method) {
         }
         if (!empty($_GET['status'])) {
             $allowedStatus = ['active', 'draft', 'out_of_stock'];
-            if (in_array($_GET['status'], $allowedStatus)) {
+            if (in_array($_GET['status'], $allowedStatus, true)) {
                 $conditions[] = 'p.status = ?';
                 $params[]     = $_GET['status'];
             }
@@ -92,15 +126,7 @@ switch ($method) {
     // ----------------------------------------------------------------
     case 'POST':
         $body   = json_body();
-        $errors = [];
-
-        if (empty($body['name']))                          $errors[] = 'name wajib diisi';
-        if (empty($body['slug']))                          $errors[] = 'slug wajib diisi';
-        if (!isset($body['price']) || !is_numeric($body['price'])) $errors[] = 'price wajib angka';
-        if (!isset($body['stock']) || !is_numeric($body['stock'])) $errors[] = 'stock wajib angka';
-        if (isset($body['status']) && !in_array($body['status'], ['active', 'draft', 'out_of_stock'])) {
-            $errors[] = 'status hanya boleh: active, draft, out_of_stock';
-        }
+        $errors = validate_product_payload($body);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         // Cek slug unik
@@ -159,14 +185,7 @@ switch ($method) {
         if (!$current) json_error('Produk tidak ditemukan', null, 404);
 
         $body   = json_body();
-        $errors = [];
-        if (isset($body['name'])  && empty($body['name']))  $errors[] = 'name tidak boleh kosong';
-        if (isset($body['slug'])  && empty($body['slug']))  $errors[] = 'slug tidak boleh kosong';
-        if (isset($body['price']) && !is_numeric($body['price'])) $errors[] = 'price wajib angka';
-        if (isset($body['stock']) && !is_numeric($body['stock'])) $errors[] = 'stock wajib angka';
-        if (isset($body['status']) && !in_array($body['status'], ['active', 'draft', 'out_of_stock'])) {
-            $errors[] = 'status hanya boleh: active, draft, out_of_stock';
-        }
+        $errors = validate_product_payload($body, true);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         // Cek slug unik (kecuali milik sendiri)

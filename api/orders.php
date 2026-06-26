@@ -81,5 +81,6 @@ try {
 
     json_success('Order berhasil dimuat', $order);
 } catch (Throwable $e) {
+    error_log('Order lookup failed: ' . $e->getMessage());
     json_error('Gagal memuat order.', null, 500);
 }

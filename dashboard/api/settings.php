@@ -44,18 +44,15 @@ switch ($method) {
         $body   = json_body();
         $errors = [];
 
-        // Validasi wajib
-        if (isset($body['store_name']) && empty(trim($body['store_name']))) {
-            $errors[] = 'store_name tidak boleh kosong';
-        }
-        // Validasi email
-        if (!empty($body['store_email']) && !filter_var($body['store_email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'store_email harus berformat email yang valid';
-        }
-        // Validasi whatsapp (hanya angka)
-        if (!empty($body['store_whatsapp']) && !ctype_digit($body['store_whatsapp'])) {
-            $errors[] = 'store_whatsapp hanya boleh berisi angka';
-        }
+        if (isset($body['store_name']) && trim((string) $body['store_name']) === '') $errors[] = 'store_name tidak boleh kosong';
+        if (isset($body['store_name']) && strlen(trim((string) $body['store_name'])) > 100) $errors[] = 'store_name maksimal 100 karakter';
+        if (isset($body['store_tagline']) && strlen(trim((string) $body['store_tagline'])) > 160) $errors[] = 'store_tagline maksimal 160 karakter';
+        if (isset($body['store_description']) && strlen(trim((string) $body['store_description'])) > 1000) $errors[] = 'store_description maksimal 1000 karakter';
+        if (!empty($body['store_email']) && (!filter_var($body['store_email'], FILTER_VALIDATE_EMAIL) || strlen((string) $body['store_email']) > 150)) $errors[] = 'store_email harus valid maksimal 150 karakter';
+        if (!empty($body['store_whatsapp']) && (!ctype_digit((string) $body['store_whatsapp']) || strlen((string) $body['store_whatsapp']) < 10 || strlen((string) $body['store_whatsapp']) > 15)) $errors[] = 'store_whatsapp harus 10-15 digit';
+        if (!empty($body['store_instagram']) && strlen(trim((string) $body['store_instagram'])) > 100) $errors[] = 'store_instagram maksimal 100 karakter';
+        if (isset($body['default_theme']) && !in_array($body['default_theme'], ['light', 'dark', 'system'], true)) $errors[] = 'default_theme tidak valid';
+        if (isset($body['accent_color']) && !preg_match('/^#[0-9a-fA-F]{6}$/', (string) $body['accent_color'])) $errors[] = 'accent_color tidak valid';
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         $stmt = $pdo->prepare(

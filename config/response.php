@@ -37,6 +37,14 @@ function require_method(string ...$methods): void
 function json_body(): array
 {
     $input = file_get_contents('php://input');
+    if (empty($input)) {
+        return [];
+    }
+
     $decoded = json_decode($input, true);
-    return is_array($decoded) ? $decoded : [];
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        json_error('Format JSON tidak valid', null, 400);
+    }
+
+    return $decoded;
 }

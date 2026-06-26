@@ -11,7 +11,7 @@ function generate_order_code(PDO $pdo): string
     $date = date('Ymd');
 
     do {
-        $random = strtoupper(substr(bin2hex(random_bytes(3)), 0, 4));
+        $random = strtoupper(bin2hex(random_bytes(8)));
         $code = "ORD-$date-$random";
         $stmt = $pdo->prepare('SELECT id FROM orders WHERE order_code = ? LIMIT 1');
         $stmt->execute([$code]);
@@ -79,5 +79,6 @@ try {
     ], 201);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
+    error_log('Checkout failed: ' . $e->getMessage());
     json_error('Gagal membuat pesanan.', null, 500);
 }

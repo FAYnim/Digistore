@@ -19,6 +19,28 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
     csrf_validate_request();
 }
 
+function validate_category_payload(array $body, bool $partial = false): array
+{
+    $errors = [];
+
+    if (!$partial || array_key_exists('name', $body)) {
+        $name = trim((string) ($body['name'] ?? ''));
+        if ($name === '') $errors[] = $partial ? 'name tidak boleh kosong' : 'name wajib diisi';
+        if (strlen($name) > 100) $errors[] = 'name maksimal 100 karakter';
+    }
+    if (!$partial || array_key_exists('slug', $body)) {
+        $slug = trim((string) ($body['slug'] ?? ''));
+        if ($slug === '') $errors[] = $partial ? 'slug tidak boleh kosong' : 'slug wajib diisi';
+        if ($slug !== '' && !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) $errors[] = 'slug tidak valid';
+        if (strlen($slug) > 120) $errors[] = 'slug maksimal 120 karakter';
+    }
+    if (array_key_exists('status', $body) && !in_array($body['status'], ['active', 'inactive'], true)) $errors[] = 'status hanya boleh: active, inactive';
+    if (array_key_exists('icon', $body) && strlen(trim((string) $body['icon'])) > 100) $errors[] = 'icon maksimal 100 karakter';
+    if (array_key_exists('sort_order', $body) && !is_numeric($body['sort_order'])) $errors[] = 'sort_order wajib angka';
+
+    return $errors;
+}
+
 switch ($method) {
 
     // ----------------------------------------------------------------
@@ -53,13 +75,7 @@ switch ($method) {
     case 'POST':
         $body = json_body();
 
-        // Validasi
-        $errors = [];
-        if (empty($body['name']))  $errors[] = 'name wajib diisi';
-        if (empty($body['slug']))  $errors[] = 'slug wajib diisi';
-        if (isset($body['status']) && !in_array($body['status'], ['active', 'inactive'])) {
-            $errors[] = 'status hanya boleh: active, inactive';
-        }
+        $errors = validate_category_payload($body);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         // Cek slug unik
@@ -97,12 +113,7 @@ switch ($method) {
         if (!$chk->fetch()) json_error('Kategori tidak ditemukan', null, 404);
 
         $body   = json_body();
-        $errors = [];
-        if (isset($body['name'])   && empty($body['name']))   $errors[] = 'name tidak boleh kosong';
-        if (isset($body['slug'])   && empty($body['slug']))   $errors[] = 'slug tidak boleh kosong';
-        if (isset($body['status']) && !in_array($body['status'], ['active', 'inactive'])) {
-            $errors[] = 'status hanya boleh: active, inactive';
-        }
+        $errors = validate_category_payload($body, true);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         // Cek slug unik (kecuali milik sendiri)

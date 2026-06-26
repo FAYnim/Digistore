@@ -60,14 +60,19 @@ switch ($method) {
         if (!in_array($qrisEnabled, ['0', '1'], true)) $errors[] = 'Status QRIS tidak valid';
         if (!in_array($bankEnabled, ['0', '1'], true)) $errors[] = 'Status bank transfer tidak valid';
         if ($qrisEnabled === '1' && $qrisImage === '') $errors[] = 'QRIS Image URL wajib diisi';
-        if ($qrisImage !== '' && !filter_var($qrisImage, FILTER_VALIDATE_URL)) $errors[] = 'QRIS Image URL tidak valid';
+        if ($qrisImage !== '' && (strlen($qrisImage) > 255 || !filter_var($qrisImage, FILTER_VALIDATE_URL) || parse_url($qrisImage, PHP_URL_SCHEME) !== 'https')) $errors[] = 'QRIS Image URL harus https valid maksimal 255 karakter';
         if ($instruction === '') $errors[] = 'Instruksi pembayaran wajib diisi';
+        if (strlen($instruction) > 1000) $errors[] = 'Instruksi pembayaran maksimal 1000 karakter';
         if ($adminWhatsapp === '') $errors[] = 'Nomor WhatsApp admin wajib diisi';
         if ($adminWhatsapp !== '' && !ctype_digit($adminWhatsapp)) $errors[] = 'Nomor WhatsApp admin hanya boleh angka';
         if ($adminWhatsapp !== '' && (strlen($adminWhatsapp) < 10 || strlen($adminWhatsapp) > 15)) $errors[] = 'Nomor WhatsApp admin harus 10-15 digit';
         if ($bankEnabled === '1' && $bankName === '') $errors[] = 'Nama bank wajib diisi';
+        if (strlen($bankName) > 100) $errors[] = 'Nama bank maksimal 100 karakter';
         if ($bankEnabled === '1' && $bankAccount === '') $errors[] = 'Nomor rekening wajib diisi';
+        if ($bankAccount !== '' && (!ctype_digit($bankAccount) || strlen($bankAccount) > 50)) $errors[] = 'Nomor rekening hanya angka maksimal 50 digit';
         if ($bankEnabled === '1' && $bankHolder === '') $errors[] = 'Nama pemilik rekening wajib diisi';
+        if (strlen($bankHolder) > 100) $errors[] = 'Nama pemilik rekening maksimal 100 karakter';
+        if (strlen(trim((string) ($body['payment_whatsapp_message'] ?? ''))) > 1000) $errors[] = 'Template pesan maksimal 1000 karakter';
 
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
