@@ -2,8 +2,13 @@
 
 require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/csrf.php';
 
 $method = strtoupper($_SERVER['REQUEST_METHOD']);
+
+if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
+    csrf_validate_request();
+}
 
 $defaults = [
     'payment_qris_enabled' => '1',

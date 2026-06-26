@@ -8,9 +8,14 @@
 
 require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/csrf.php';
 
 $method = strtoupper($_SERVER['REQUEST_METHOD']);
 $id     = isset($_GET['id']) ? (int) $_GET['id'] : null;
+
+if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
+    csrf_validate_request();
+}
 
 $validStatuses = ['pending', 'paid', 'completed', 'cancelled'];
 

@@ -48,9 +48,15 @@ async function apiRequest(url, opts = {}) {
   
   showLoader();
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const headers = { 'Content-Type': 'application/json', Accept: 'application/json', ...(opts.headers || {}) };
+    if (csrfToken && ['POST', 'PUT', 'DELETE'].includes((opts.method || 'GET').toUpperCase())) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+
     const res = await fetch(fullUrl, {
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       ...opts,
+      headers,
     });
     if (res.status === 401) {
       window.location.href = 'login.php';

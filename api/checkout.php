@@ -1,8 +1,10 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/rate-limit.php';
 
 require_method('POST');
+rate_limit('checkout:' . rate_limit_identifier(), 10, 300);
 
 function generate_order_code(PDO $pdo): string
 {

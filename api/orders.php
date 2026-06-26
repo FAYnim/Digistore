@@ -1,8 +1,10 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/rate-limit.php';
 
 require_method('GET');
+rate_limit('order-lookup:' . rate_limit_identifier(), 30, 300);
 
 $code = strtoupper(trim($_GET['code'] ?? ''));
 if ($code === '') json_error('Kode order wajib diisi.', null, 422);

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/../../config/rate-limit.php';
 require_once __DIR__ . '/../config/database.php';
 
 start_admin_session();
@@ -23,6 +24,13 @@ if (!csrf_validate($csrfToken)) {
 
 if ($username === '' || $password === '') {
     $_SESSION['login_error'] = 'Username dan password wajib diisi.';
+    header('Location: ../login.php');
+    exit;
+}
+
+$rateKey = 'admin-login:' . rate_limit_identifier() . ':' . strtolower($username);
+if (rate_limit_exceeded($rateKey, 5, 300)) {
+    $_SESSION['login_error'] = 'Terlalu banyak percobaan login. Silakan coba lagi nanti.';
     header('Location: ../login.php');
     exit;
 }

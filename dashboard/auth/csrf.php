@@ -21,3 +21,12 @@ function csrf_validate($token)
         && isset($_SESSION['csrf_token'])
         && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+function csrf_validate_request(): void
+{
+    $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
+
+    if (!csrf_validate($token)) {
+        json_error('Session tidak valid. Silakan muat ulang halaman.', null, 419);
+    }
+}
