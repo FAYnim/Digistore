@@ -13,7 +13,6 @@ $navItems = [
     <div class="flex h-14 items-center border-b border-slate-200 px-4 dark:border-slate-800">
       <div>
         <p class="text-sm font-black tracking-tight text-slate-950 dark:text-white">DigiStore</p>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Admin</p>
       </div>
     </div>
     <nav class="flex-1 space-y-1 p-3">
