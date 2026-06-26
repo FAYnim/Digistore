@@ -9,6 +9,7 @@ const $  = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const rupiah = (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
 const slugify = (s) => s.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
+const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}` : s;
 
 function statusLabel(s) {
   const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu', paid: 'Dibayar', completed: 'Selesai', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
@@ -58,10 +59,14 @@ async function renderOverview() {
   const d = res.data;
 
   const stats = [
-    ['Total Produk',    d.total_products,     'fa-solid fa-box'],
-    ['Produk Aktif',    d.active_products,    'fa-solid fa-circle-check'],
-    ['Pesanan Hari Ini', d.today_orders,      'fa-solid fa-receipt'],
-    ['Rating Toko',     d.average_rating || '-', 'fa-solid fa-star'],
+    ['Produk Tersedia',       d.available_products ?? d.active_products, 'fa-solid fa-circle-check'],
+    ['Produk Habis',          d.out_of_stock_products,                   'fa-solid fa-box-open'],
+    ['Produk Diproses',       d.processing_products,                     'fa-solid fa-spinner'],
+    ['Penghasilan Hari Ini',  rupiah(d.today_income),                    'fa-solid fa-money-bill-wave'],
+    ['Pesanan Hari Ini',      d.today_orders,                            'fa-solid fa-receipt'],
+    ['Total Produk',          d.total_products,                          'fa-solid fa-box'],
+    ['Total Penghasilan',     rupiah(d.total_income),                    'fa-solid fa-chart-line'],
+    ['Rating',                d.average_rating || '-',                   'fa-solid fa-star'],
   ];
   $('#statsGrid').innerHTML = stats.map(([label, value, icon]) =>
     `<div class="card p-5">
@@ -73,7 +78,7 @@ async function renderOverview() {
 
   $('#recentOrders').innerHTML = (d.recent_orders || []).map((o) =>
     `<tr>
-       <td class="font-black">${o.order_code}</td>
+       <td class="font-black" title="${o.order_code}">${shortCode(o.order_code)}</td>
        <td>${o.customer_name}</td>
        <td class="max-w-[160px] truncate">${o.products ?? '-'}</td>
        <td class="font-bold">${rupiah(o.total_amount)}</td>

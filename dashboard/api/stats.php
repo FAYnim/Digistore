@@ -11,8 +11,8 @@ if (strtoupper($_SERVER['REQUEST_METHOD']) !== 'GET') {
     json_error('Method tidak diizinkan', null, 405);
 }
 
-// Total & aktif produk
-$p = $pdo->query('SELECT COUNT(*) AS total, SUM(status = "active") AS active FROM products');
+// Total, tersedia, dan habis produk
+$p = $pdo->query('SELECT COUNT(*) AS total, SUM(status = "active" AND stock > 0) AS available, SUM(stock <= 0) AS out_of_stock FROM products');
 $products = $p->fetch();
 
 // Total & hari ini pesanan
@@ -22,6 +22,25 @@ $o     = $pdo->prepare(
 );
 $o->execute([$today]);
 $orders = $o->fetch();
+
+// Penghasilan dari pesanan dibayar/selesai
+$i = $pdo->prepare(
+    'SELECT COALESCE(SUM(total_amount), 0) AS total_income,
+            COALESCE(SUM(CASE WHEN DATE(created_at) = ? THEN total_amount ELSE 0 END), 0) AS today_income
+     FROM orders
+     WHERE status IN ("paid", "completed")'
+);
+$i->execute([$today]);
+$income = $i->fetch();
+
+// Produk pada pesanan yang sedang diproses
+$pp = $pdo->query(
+    'SELECT COALESCE(SUM(oi.quantity), 0) AS processing_products
+     FROM order_items oi
+     INNER JOIN orders o ON o.id = oi.order_id
+     WHERE o.status = "paid"'
+);
+$processingProducts = $pp->fetch();
 
 // Total testimoni & rata-rata rating
 $t = $pdo->query('SELECT COUNT(*) AS total, ROUND(AVG(rating), 1) AS avg_rating FROM testimonials WHERE status = "visible"');
@@ -56,12 +75,17 @@ foreach ($recentOrders as &$ord) {
 unset($ord);
 
 json_success('Statistik berhasil dimuat', [
-    'total_products'     => (int) $products['total'],
-    'active_products'    => (int) $products['active'],
-    'total_orders'       => (int) $orders['total'],
-    'today_orders'       => (int) $orders['today_count'],
-    'total_testimonials' => (int) $testimonials['total'],
-    'average_rating'     => $testimonials['avg_rating'] ? (float) $testimonials['avg_rating'] : 0.0,
-    'featured_products'  => $featuredProducts,
-    'recent_orders'      => $recentOrders,
+    'total_products'        => (int) $products['total'],
+    'active_products'       => (int) $products['available'],
+    'available_products'    => (int) $products['available'],
+    'out_of_stock_products' => (int) $products['out_of_stock'],
+    'processing_products'   => (int) $processingProducts['processing_products'],
+    'total_orders'          => (int) $orders['total'],
+    'today_orders'          => (int) $orders['today_count'],
+    'today_income'          => (int) $income['today_income'],
+    'total_income'          => (int) $income['total_income'],
+    'total_testimonials'    => (int) $testimonials['total'],
+    'average_rating'        => $testimonials['avg_rating'] ? (float) $testimonials['avg_rating'] : 0.0,
+    'featured_products'     => $featuredProducts,
+    'recent_orders'         => $recentOrders,
 ]);
