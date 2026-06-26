@@ -18,15 +18,18 @@
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased">
-  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[color:var(--surface-glass)] backdrop-blur-xl">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8" aria-label="Navigasi status pesanan">
-      <a href="index.php#produk" class="flex items-center gap-3 font-display text-xl font-extrabold tracking-tight">
-        <span class="grid h-10 w-10 place-items-center rounded-xl bg-[var(--accent)] text-white shadow-brand">D</span>
+  <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
+    <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi status pesanan">
+      <a href="index.php#produk" class="brand-pill">
+        <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span>DigiStore</span>
       </a>
-      <div class="flex items-center gap-2">
+      <div class="nav-shell hidden md:flex">
+        <a class="nav-link" href="index.php#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link active" href="order-status.php"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
-        <a class="small-btn" href="index.php#produk">Katalog</a>
       </div>
     </nav>
   </header>
