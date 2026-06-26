@@ -183,9 +183,9 @@ async function renderOverview() {
     `<div class="card p-5">
        <div class="mb-8 flex items-start justify-between gap-4">
          <p class="text-[13px] font-black text-slate-500 dark:text-slate-400">${label}</p>
-         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xl text-white"><i class="${icon}"></i></div>
-       </div>
-       <p class="text-3xl font-black leading-none text-slate-950 dark:text-white">${value}</p>
+          <div class="stat-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-xl text-white"><i class="${icon}"></i></div>
+        </div>
+        <p class="stat-value text-3xl font-black leading-none text-slate-950 dark:text-white">${value}</p>
      </div>`
   ).join('');
 
