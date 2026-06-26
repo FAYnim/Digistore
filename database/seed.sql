@@ -85,6 +85,12 @@ INSERT INTO store_settings (setting_key, setting_value) VALUES
 ('store_instagram',   'digistore'),
 ('default_theme',     'light'),
 ('accent_color',      '#2563EB'),
+('payment_qris_enabled', '1'),
 ('payment_qris_image', 'https://placehold.co/400x400?text=QRIS+Dummy'),
-('payment_instruction', 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.'),
+('payment_bank_enabled', '0'),
+('payment_bank_name', ''),
+('payment_bank_account', ''),
+('payment_bank_holder', ''),
+('payment_instruction', 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin melalui WhatsApp.'),
+('payment_admin_whatsapp', '6281234567890'),
 ('payment_whatsapp_message', 'Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek.');

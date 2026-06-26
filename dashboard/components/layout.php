@@ -31,6 +31,9 @@ function renderFooter() {
   </div>
   <script src="assets/js/api.js"></script>
   <script src="assets/js/dashboard.js"></script>
+  <?php if (!empty($GLOBALS['pageScript'])): ?>
+    <script src="<?= $GLOBALS['pageScript'] ?>"></script>
+  <?php endif; ?>
 </body>
 </html>
 <?php

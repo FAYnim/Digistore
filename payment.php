@@ -82,9 +82,11 @@
 
       const order = res.data;
       const itemNames = (order.items || []).map((item) => escapeText(item.product_name)).join(", ");
-      const message = order.payment.whatsapp_message || "Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek.";
-      const waText = encodeURIComponent(message.replace("{order_code}", order.order_code));
-      const waLink = order.payment.whatsapp ? `https://wa.me/${order.payment.whatsapp}?text=${waText}` : "#";
+      const payment = order.payment || {};
+      const hasMethod = payment.qris_enabled || payment.bank_enabled;
+      const message = payment.whatsapp_message || "Halo admin, saya sudah membuat pesanan " + order.order_code + ". Mohon dicek.";
+      const waText = encodeURIComponent(message);
+      const waLink = payment.admin_whatsapp ? `https://wa.me/${payment.admin_whatsapp}?text=${waText}` : "#";
 
       document.querySelector("#orderDetail").innerHTML = `
         <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
@@ -97,14 +99,15 @@
       `;
 
       document.querySelector("#paymentCard").innerHTML = `
-        <h2 class="font-display text-2xl font-extrabold">QRIS</h2>
-        <img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(order.payment.qris_image)}" alt="QRIS Dummy">
+        <h2 class="font-display text-2xl font-extrabold">Pembayaran</h2>
+        <p class="mt-2 text-sm text-[var(--muted)]">Selesaikan pembayaran manual.</p>
         <p class="mt-5 font-display text-3xl font-extrabold">${rupiah.format(Number(order.total_amount || 0))}</p>
-        <ol class="mt-5 list-decimal space-y-2 pl-5 text-left text-sm text-[var(--muted)]">
-          <li>Scan QRIS.</li><li>Bayar sesuai total.</li><li>Simpan bukti pembayaran.</li><li>Hubungi admin untuk konfirmasi.</li>
-        </ol>
+        ${hasMethod ? "" : '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Metode pembayaran belum tersedia. Hubungi admin.</p>'}
+        ${payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image || 'https://placehold.co/400x400?text=QRIS+Dummy')}" alt="QRIS">` : ""}
+        ${payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
+        <p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(payment.instruction || "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.")}</p>
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
-          <a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>
+          <a class="primary-btn text-center ${payment.admin_whatsapp ? '' : 'pointer-events-none opacity-50'}" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>
           <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
           <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
         </div>
