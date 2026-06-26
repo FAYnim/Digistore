@@ -49,10 +49,10 @@
       <form id="checkoutForm" class="modal-card grid w-full max-w-none gap-5">
         <h2 class="font-display text-2xl font-extrabold">Form Pembeli</h2>
         <label class="grid gap-2 text-sm font-bold">Nama
-          <input id="customerName" class="control" type="text" placeholder="Faris" autocomplete="name">
+          <input id="customerName" class="control" type="text" placeholder="John Doe" autocomplete="name">
         </label>
         <label class="grid gap-2 text-sm font-bold">Email
-          <input id="customerEmail" class="control" type="email" placeholder="faris@email.com" autocomplete="email">
+          <input id="customerEmail" class="control" type="email" placeholder="john@example.com" autocomplete="email">
         </label>
         <label class="grid gap-2 text-sm font-bold">WhatsApp
           <input id="customerPhone" class="control" type="tel" placeholder="6281234567890" autocomplete="tel">
