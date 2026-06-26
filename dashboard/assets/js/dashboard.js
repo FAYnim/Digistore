@@ -27,6 +27,26 @@ function badge(s) {
   return `<span class="badge ${badgeClass(s)}">${statusLabel(s)}</span>`;
 }
 
+let incomeChartInstance = null;
+let orderStatusChartInstance = null;
+let latestOverviewData = null;
+
+function isDarkMode() {
+  return document.documentElement.classList.contains('dark');
+}
+
+function chartTextColor() {
+  return isDarkMode() ? '#cbd5e1' : '#475569';
+}
+
+function chartGridColor() {
+  return isDarkMode() ? 'rgba(51, 65, 85, .7)' : 'rgba(226, 232, 240, .9)';
+}
+
+function destroyChart(chart) {
+  if (chart) chart.destroy();
+}
+
 function openModal(id)  { $(id)?.classList.add('open'); }
 function closeModals()  { $$('.modal').forEach((m) => m.classList.remove('open')); }
 
@@ -45,18 +65,109 @@ function initShell() {
   $('#themeToggle')?.addEventListener('click', () => {
     document.documentElement.classList.toggle('dark');
     localStorage.setItem('digistore-dashboard-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    window.dispatchEvent(new Event('dashboard-theme-change'));
   });
   $$('[data-close-modal]').forEach((btn) => btn.addEventListener('click', closeModals));
   $$('.modal').forEach((modal) => modal.addEventListener('click', (e) => { if (e.target === modal) closeModals(); }));
+  window.addEventListener('dashboard-theme-change', () => {
+    if (latestOverviewData && $('#incomeChart')) renderOverviewCharts(latestOverviewData);
+  });
 }
 
 /* ----------------------------------------------------------------
  * Overview (index.php)
  * --------------------------------------------------------------- */
+function renderOverviewCharts(data) {
+  if (typeof Chart === 'undefined') return;
+
+  const incomeRows = data.income_chart || [];
+  const statusRows = data.order_status_chart || [];
+  const incomeHasData = incomeRows.some((row) => Number(row.total) > 0);
+  const statusHasData = statusRows.some((row) => Number(row.total) > 0);
+
+  $('#incomeChartEmpty')?.classList.toggle('hidden', incomeHasData);
+  $('#orderStatusChartEmpty')?.classList.toggle('hidden', statusHasData);
+
+  destroyChart(incomeChartInstance);
+  destroyChart(orderStatusChartInstance);
+
+  const incomeEl = $('#incomeChart');
+  const statusEl = $('#orderStatusChart');
+
+  if (incomeEl) {
+    incomeChartInstance = new Chart(incomeEl, {
+      type: 'line',
+      data: {
+        labels: incomeRows.map((row) => row.label),
+        datasets: [{
+          label: 'Pendapatan',
+          data: incomeRows.map((row) => Number(row.total)),
+          borderColor: '#2563eb',
+          backgroundColor: 'rgba(37, 99, 235, .12)',
+          fill: true,
+          tension: .35,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => rupiah(ctx.parsed.y),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: chartTextColor(), font: { weight: '700' } },
+            grid: { color: chartGridColor() },
+          },
+          y: {
+            ticks: { color: chartTextColor(), callback: (value) => rupiah(value) },
+            grid: { color: chartGridColor() },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  if (statusEl) {
+    orderStatusChartInstance = new Chart(statusEl, {
+      type: 'doughnut',
+      data: {
+        labels: statusRows.map((row) => row.label),
+        datasets: [{
+          data: statusRows.map((row) => Number(row.total)),
+          backgroundColor: ['#f59e0b', '#2563eb', '#16a34a', '#dc2626', '#64748b'],
+          borderColor: isDarkMode() ? '#0f172a' : '#ffffff',
+          borderWidth: 3,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: chartTextColor(), font: { weight: '700' } },
+          },
+        },
+        cutout: '62%',
+      },
+    });
+  }
+}
+
 async function renderOverview() {
   const res = await api.get('/dashboard/api/stats.php');
   if (!res.success) { showToast(res.message, 'error'); return; }
   const d = res.data;
+  latestOverviewData = d;
 
   const stats = [
     ['Produk Tersedia',       d.available_products ?? d.active_products, 'fa-solid fa-circle-check'],
@@ -77,6 +188,8 @@ async function renderOverview() {
        <p class="text-3xl font-black leading-none text-slate-950 dark:text-white">${value}</p>
      </div>`
   ).join('');
+
+  renderOverviewCharts(d);
 
   $('#recentOrders').innerHTML = (d.recent_orders || []).map((o) =>
     `<tr>

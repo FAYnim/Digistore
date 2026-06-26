@@ -33,6 +33,31 @@ $i = $pdo->prepare(
 $i->execute([$today]);
 $income = $i->fetch();
 
+$incomeChart = [];
+for ($day = 6; $day >= 0; $day--) {
+    $date = date('Y-m-d', strtotime("-$day days"));
+    $incomeChart[$date] = [
+        'date'  => $date,
+        'label' => date('d M', strtotime($date)),
+        'total' => 0,
+    ];
+}
+
+$ic = $pdo->prepare(
+    'SELECT DATE(created_at) AS order_date, COALESCE(SUM(total_amount), 0) AS total
+     FROM orders
+     WHERE status IN ("paid", "completed")
+       AND DATE(created_at) BETWEEN ? AND ?
+     GROUP BY DATE(created_at)'
+);
+$ic->execute([array_key_first($incomeChart), array_key_last($incomeChart)]);
+foreach ($ic->fetchAll() as $row) {
+    if (isset($incomeChart[$row['order_date']])) {
+        $incomeChart[$row['order_date']]['total'] = (int) $row['total'];
+    }
+}
+$incomeChart = array_values($incomeChart);
+
 // Produk pada pesanan yang sedang diproses
 $pp = $pdo->query(
     'SELECT COALESCE(SUM(oi.quantity), 0) AS processing_products
@@ -69,6 +94,27 @@ $ro = $pdo->query(
 );
 $recentOrders = $ro->fetchAll();
 
+$os = $pdo->query(
+    'SELECT status, COUNT(*) AS total
+     FROM orders
+     GROUP BY status
+     ORDER BY total DESC'
+);
+$orderStatusChart = array_map(function ($row) {
+    $labels = [
+        'pending'   => 'Menunggu',
+        'paid'      => 'Dibayar',
+        'completed' => 'Selesai',
+        'cancelled' => 'Batal',
+    ];
+
+    return [
+        'status' => $row['status'],
+        'label'  => $labels[$row['status']] ?? $row['status'],
+        'total'  => (int) $row['total'],
+    ];
+}, $os->fetchAll());
+
 foreach ($recentOrders as &$ord) {
     $ord['total_amount'] = (int) $ord['total_amount'];
 }
@@ -88,4 +134,6 @@ json_success('Statistik berhasil dimuat', [
     'average_rating'        => $testimonials['avg_rating'] ? (float) $testimonials['avg_rating'] : 0.0,
     'featured_products'     => $featuredProducts,
     'recent_orders'         => $recentOrders,
+    'income_chart'          => $incomeChart,
+    'order_status_chart'    => $orderStatusChart,
 ]);
