@@ -4,11 +4,12 @@ require_once __DIR__ . '/../config/database.php';
 
 require_method('GET');
 
-$code = trim($_GET['code'] ?? '');
+$code = strtoupper(trim($_GET['code'] ?? ''));
 if ($code === '') json_error('Kode order wajib diisi.', null, 422);
+if (strlen($code) > 50 || !preg_match('/^[A-Z0-9-]+$/', $code)) json_error('Kode order tidak valid.', null, 422);
 
 try {
-    $stmt = $pdo->prepare('SELECT id, order_code, customer_name, total_amount, payment_method, payment_deadline, status, note, delivery_note, created_at FROM orders WHERE order_code = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, order_code, customer_name, customer_email, customer_phone, total_amount, payment_method, payment_deadline, status, note, delivery_note, created_at FROM orders WHERE order_code = ? LIMIT 1');
     $stmt->execute([$code]);
     $order = $stmt->fetch();
 
