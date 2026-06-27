@@ -1,10 +1,10 @@
 const dashboardProducts = [
-  { id: 1, name: "Google AI Pro 12 Bulan", category: "Tools AI", price: 25000, originalPrice: 50000, stock: 12, status: "Aktif", badge: "Best Seller", image: "https://placehold.co/600x400?text=Google+AI+Pro", description: "Akses tools AI premium siap pakai.", featured: true },
-  { id: 2, name: "ChatGPT Plus Sharing", category: "Akun Premium", price: 45000, originalPrice: 75000, stock: 8, status: "Aktif", badge: "Popular", image: "https://placehold.co/600x400?text=ChatGPT+Plus", description: "Akun sharing premium untuk produktivitas.", featured: true },
-  { id: 3, name: "Netflix Premium 1 Bulan", category: "Akun Premium", price: 35000, originalPrice: 60000, stock: 4, status: "Aktif", badge: "Limited", image: "https://placehold.co/600x400?text=Netflix", description: "Akun hiburan premium aktif cepat.", featured: true },
-  { id: 4, name: "Canva Pro Edu", category: "Akun Premium", price: 20000, originalPrice: 40000, stock: 0, status: "Habis", badge: "Hemat", image: "https://placehold.co/600x400?text=Canva+Pro", description: "Desain cepat dengan akses Canva Pro.", featured: false },
-  { id: 5, name: "Source Code Toko Online", category: "Source Code", price: 99000, originalPrice: 150000, stock: 20, status: "Aktif", badge: "Recommended", image: "https://placehold.co/600x400?text=Source+Code", description: "Template toko online siap modifikasi.", featured: false },
-  { id: 6, name: "Template Landing SaaS", category: "Template Website", price: 79000, originalPrice: 120000, stock: 14, status: "Draft", badge: "New", image: "https://placehold.co/600x400?text=Landing+SaaS", description: "Landing page modern untuk produk digital.", featured: false }
+  { id: 1, name: "Google AI Pro 12 Bulan", category: "Tools AI", price: 25000, originalPrice: 50000, stock: 12, status: "Aktif", image: "https://placehold.co/600x400?text=Google+AI+Pro", description: "Akses tools AI premium siap pakai.", featured: true },
+  { id: 2, name: "ChatGPT Plus Sharing", category: "Akun Premium", price: 45000, originalPrice: 75000, stock: 8, status: "Aktif", image: "https://placehold.co/600x400?text=ChatGPT+Plus", description: "Akun sharing premium untuk produktivitas.", featured: true },
+  { id: 3, name: "Netflix Premium 1 Bulan", category: "Akun Premium", price: 35000, originalPrice: 60000, stock: 4, status: "Aktif", image: "https://placehold.co/600x400?text=Netflix", description: "Akun hiburan premium aktif cepat.", featured: true },
+  { id: 4, name: "Canva Pro Edu", category: "Akun Premium", price: 20000, originalPrice: 40000, stock: 0, status: "Habis", image: "https://placehold.co/600x400?text=Canva+Pro", description: "Desain cepat dengan akses Canva Pro.", featured: false },
+  { id: 5, name: "Source Code Toko Online", category: "Source Code", price: 99000, originalPrice: 150000, stock: 20, status: "Aktif", image: "https://placehold.co/600x400?text=Source+Code", description: "Template toko online siap modifikasi.", featured: false },
+  { id: 6, name: "Template Landing SaaS", category: "Template Website", price: 79000, originalPrice: 120000, stock: 14, status: "Draft", image: "https://placehold.co/600x400?text=Landing+SaaS", description: "Landing page modern untuk produk digital.", featured: false }
 ];
 
 const dashboardCategories = [

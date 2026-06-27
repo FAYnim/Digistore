@@ -93,7 +93,6 @@
             <div class="space-y-4 p-6">
               <div>
                 <h1 class="font-display text-2xl font-extrabold">${escapeText(p.name)}</h1>
-                ${p.badge ? '<span class="mt-1 inline-block rounded bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-500">' + escapeText(p.badge) + '</span>' : ''}
               </div>
 
               <div class="flex items-center gap-3 text-sm text-[var(--muted)]">

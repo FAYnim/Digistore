@@ -41,7 +41,6 @@ function normalizeProduct(product) {
     rating: Number(product.rating || 0),
     sold: Number(product.sold_count || 0),
     stock: Number(product.stock || 0),
-    badge: product.badge || "",
     status: product.status || "active",
     isFeatured: Boolean(product.is_featured),
     createdAt: product.created_at || "",
@@ -59,7 +58,6 @@ function productCard(product) {
       <div class="product-body">
         <div class="flex flex-wrap items-center gap-2">
           <span class="badge">${escapeText(product.category)}</span>
-          ${product.badge ? `<span class="badge">${escapeText(product.badge)}</span>` : ""}
           <span class="status ${stock.className}">${stock.label}</span>
         </div>
         <h3 class="product-title">${safeName}</h3>

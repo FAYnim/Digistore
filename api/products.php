@@ -55,7 +55,6 @@ $sql = "SELECT
           p.original_price,
           p.stock,
           p.image_url,
-          p.badge,
           p.status,
           p.is_featured,
           p.sold_count,
