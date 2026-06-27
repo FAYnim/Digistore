@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Pembayaran QRIS DigiStore.">
+  <meta name="description" content="Pembayaran DigiStore.">
   <title>Pembayaran — DigiStore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +38,7 @@
   <main class="section">
     <div class="mb-8">
       <h1 class="font-display text-4xl font-extrabold">Pembayaran</h1>
-      <p class="mt-3 text-[var(--muted)]">Scan QRIS dan konfirmasi ke admin.</p>
+      <p id="paymentSubtitle" class="mt-3 text-[var(--muted)]">Selesaikan pembayaran dan konfirmasi ke admin.</p>
     </div>
 
     <div id="message" class="mb-6 hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm font-bold text-[var(--danger)]"></div>
@@ -48,7 +48,7 @@
         <h2 class="font-display text-2xl font-extrabold">Memuat pesanan...</h2>
       </section>
       <section id="paymentCard" class="modal-card w-full text-center">
-        <h2 class="font-display text-2xl font-extrabold">Memuat QRIS...</h2>
+        <h2 class="font-display text-2xl font-extrabold">Memuat pembayaran...</h2>
       </section>
     </div>
   </main>
@@ -79,6 +79,14 @@
       document.querySelector("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
     }
 
+    function paymentActionText(payment) {
+      if (!payment.available) return "Hubungi admin untuk instruksi pembayaran.";
+      if (payment.qris_enabled && payment.bank_enabled) return "Scan QRIS atau transfer bank, lalu konfirmasi ke admin.";
+      if (payment.qris_enabled) return "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.";
+      if (payment.bank_enabled) return "Transfer bank sesuai total, lalu konfirmasi ke admin.";
+      return "Selesaikan pembayaran dan konfirmasi ke admin.";
+    }
+
     async function loadOrder() {
       if (!code) return showMessage("Order tidak ditemukan.");
 
@@ -88,11 +96,14 @@
       const order = res.data;
       const itemNames = (order.items || []).map((item) => escapeText(item.product_name)).join(", ");
       const payment = order.payment || {};
-      const hasMethod = payment.qris_enabled || payment.bank_enabled;
+      const hasMethod = payment.available && (payment.qris_enabled || payment.bank_enabled);
       const orderForMessage = { ...order, status_label: statusLabels[order.status] || order.status };
       const message = buildWhatsAppMessage(payment.whatsapp_message, orderForMessage);
       const waLink = buildWhatsAppLink(payment.admin_whatsapp, message);
       const hasWhatsapp = waLink !== "";
+      const actionText = paymentActionText(payment);
+      const instructionText = payment.instruction === "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin." ? actionText : (payment.instruction || actionText);
+      document.querySelector("#paymentSubtitle").textContent = actionText;
 
       document.querySelector("#orderDetail").innerHTML = `
         <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
@@ -106,12 +117,12 @@
 
       document.querySelector("#paymentCard").innerHTML = `
         <h2 class="font-display text-2xl font-extrabold">Pembayaran</h2>
-        <p class="mt-2 text-sm text-[var(--muted)]">Selesaikan pembayaran manual.</p>
+        <p class="mt-2 text-sm text-[var(--muted)]">${escapeText(actionText)}</p>
         <p class="mt-5 font-display text-3xl font-extrabold">${rupiah.format(Number(order.total_amount || 0))}</p>
-        ${hasMethod ? "" : '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Metode pembayaran belum tersedia. Hubungi admin.</p>'}
-        ${payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image || 'https://placehold.co/400x400?text=QRIS+Dummy')}" alt="QRIS">` : ""}
-        ${payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
-        <p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(payment.instruction || "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.")}</p>
+        ${hasMethod ? "" : '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Pembayaran belum dikonfigurasi. Hubungi admin.</p>'}
+        ${hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
+        ${hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
+        ${hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
           ${hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
           <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>

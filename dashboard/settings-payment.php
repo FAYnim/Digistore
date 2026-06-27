@@ -8,7 +8,7 @@ renderHeader($pageTitle, $activePage);
 <section class="space-y-5" data-page="payment-settings">
   <div>
     <h2 class="text-2xl font-black">Setting Pembayaran</h2>
-    <p class="text-sm text-slate-500 dark:text-slate-400">Atur QRIS dan konfirmasi pembayaran.</p>
+    <p class="text-sm text-slate-500 dark:text-slate-400">Atur metode pembayaran dan konfirmasi pembayaran.</p>
   </div>
 
   <div class="grid gap-5 xl:grid-cols-2">
@@ -21,7 +21,7 @@ renderHeader($pageTitle, $activePage);
             <option value="0">Nonaktif</option>
           </select>
         </label>
-        <label>QRIS Image URL<input class="input mt-1" id="paymentQrisImage" placeholder="https://placehold.co/400x400?text=QRIS+Dummy" type="url"></label>
+        <label>QRIS Image URL<input class="input mt-1" id="paymentQrisImage" placeholder="https://domain.com/qris.jpg" type="url"></label>
       </div>
 
       <div class="card space-y-3 p-5">
@@ -39,7 +39,7 @@ renderHeader($pageTitle, $activePage);
 
       <div class="card space-y-3 p-5">
         <h3 class="font-black">Instruksi Pembayaran</h3>
-        <label>Instruksi Pembayaran<textarea class="textarea mt-1" id="paymentInstruction" rows="3" placeholder="Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin melalui WhatsApp."></textarea></label>
+        <label>Instruksi Pembayaran<textarea class="textarea mt-1" id="paymentInstruction" rows="3" placeholder="Selesaikan pembayaran, lalu konfirmasi ke admin."></textarea></label>
       </div>
 
       <div class="card space-y-3 p-5">

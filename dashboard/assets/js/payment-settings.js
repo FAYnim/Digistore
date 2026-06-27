@@ -1,12 +1,12 @@
 const paymentDefaults = {
-  payment_qris_enabled: '1',
-  payment_qris_image: 'https://placehold.co/400x400?text=QRIS+Dummy',
+  payment_qris_enabled: '0',
+  payment_qris_image: '',
   payment_bank_enabled: '0',
   payment_bank_name: '',
   payment_bank_account: '',
   payment_bank_holder: '',
-  payment_instruction: 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin melalui WhatsApp.',
-  payment_admin_whatsapp: '6281234567890',
+  payment_instruction: '',
+  payment_admin_whatsapp: '',
   payment_whatsapp_message: 'Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek.',
 };
 
@@ -21,9 +21,16 @@ function paymentValue(id) {
 function renderPaymentPreview() {
   const qrisEnabled = paymentValue('#paymentQrisEnabled') === '1';
   const bankEnabled = paymentValue('#paymentBankEnabled') === '1';
-  const qrisImage = paymentValue('#paymentQrisImage') || paymentDefaults.payment_qris_image;
-  const instruction = paymentValue('#paymentInstruction') || paymentDefaults.payment_instruction;
-  const whatsapp = normalizeWhatsAppNumber(paymentValue('#paymentAdminWhatsapp') || paymentDefaults.payment_admin_whatsapp);
+  const qrisImage = paymentValue('#paymentQrisImage');
+  const instruction = paymentValue('#paymentInstruction');
+  const defaultInstruction = qrisEnabled && bankEnabled
+    ? 'Scan QRIS atau transfer bank, lalu konfirmasi ke admin.'
+    : qrisEnabled
+      ? 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin.'
+      : bankEnabled
+        ? 'Transfer bank sesuai total, lalu konfirmasi ke admin.'
+        : 'Aktifkan minimal satu metode pembayaran.';
+  const whatsapp = normalizeWhatsAppNumber(paymentValue('#paymentAdminWhatsapp'));
   const message = buildWhatsAppMessage(paymentValue('#paymentWhatsappMessage') || paymentDefaults.payment_whatsapp_message, {
     order_code: 'ORD-20260624-A8K3',
     customer_name: 'Budi',
@@ -33,13 +40,15 @@ function renderPaymentPreview() {
   });
   const waLink = buildWhatsAppLink(whatsapp, message);
   const warning = document.querySelector('#paymentWhatsappWarning');
+  const instructionField = document.querySelector('#paymentInstruction');
+  if (instructionField) instructionField.placeholder = defaultInstruction;
   if (warning) warning.classList.toggle('hidden', (paymentValue('#paymentWhatsappMessage') || paymentDefaults.payment_whatsapp_message).includes('{order_code}'));
 
   document.querySelector('#paymentPreview').innerHTML = `
     ${qrisEnabled ? `<img class="mx-auto h-64 w-64 rounded-3xl object-cover" src="${paymentEscape(qrisImage)}" alt="Preview QRIS">` : '<div class="rounded-2xl bg-slate-100 p-6 text-sm font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">QRIS nonaktif</div>'}
     <p class="mt-5 text-3xl font-black">Rp25.000</p>
     ${bankEnabled ? `<div class="mt-5 rounded-2xl border border-slate-200 p-4 text-left text-sm dark:border-slate-800"><p><b>${paymentEscape(paymentValue('#paymentBankName'))}</b></p><p>${paymentEscape(paymentValue('#paymentBankAccount'))}</p><p>${paymentEscape(paymentValue('#paymentBankHolder'))}</p></div>` : ''}
-    <p class="mt-5 text-left text-sm text-slate-500 dark:text-slate-400">${paymentEscape(instruction)}</p>
+    <p class="mt-5 text-left text-sm text-slate-500 dark:text-slate-400">${paymentEscape(instruction || defaultInstruction)}</p>
     ${waLink ? `<a class="btn-primary mt-5 inline-flex" href="${paymentEscape(waLink)}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="mt-5 text-sm font-bold text-slate-500 dark:text-slate-400">WhatsApp admin belum tersedia.</p>'}
   `;
 }

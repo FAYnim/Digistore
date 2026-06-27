@@ -29,14 +29,14 @@ try {
     unset($item);
 
     $paymentDefaults = [
-        'payment_qris_enabled' => '1',
-        'payment_qris_image' => 'https://placehold.co/400x400?text=QRIS+Dummy',
+        'payment_qris_enabled' => '0',
+        'payment_qris_image' => '',
         'payment_bank_enabled' => '0',
         'payment_bank_name' => '',
         'payment_bank_account' => '',
         'payment_bank_holder' => '',
-        'payment_instruction' => 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin melalui WhatsApp.',
-        'payment_admin_whatsapp' => '6281234567890',
+        'payment_instruction' => '',
+        'payment_admin_whatsapp' => '',
         'payment_whatsapp_message' => 'Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek.',
     ];
     $placeholders = implode(',', array_fill(0, count($paymentDefaults), '?'));
@@ -53,6 +53,9 @@ try {
         'completed' => 'Selesai',
         'cancelled' => 'Dibatalkan',
     ];
+    $qrisEnabled = $settings['payment_qris_enabled'] === '1' && trim((string) $settings['payment_qris_image']) !== '';
+    $bankEnabled = $settings['payment_bank_enabled'] === '1' && trim((string) $settings['payment_bank_name']) !== '' && trim((string) $settings['payment_bank_account']) !== '' && trim((string) $settings['payment_bank_holder']) !== '';
+    $paymentAvailable = ($qrisEnabled || $bankEnabled) && trim((string) $settings['payment_instruction']) !== '';
     $whatsappTemplate = trim((string) $settings['payment_whatsapp_message']) ?: $paymentDefaults['payment_whatsapp_message'];
     $adminWhatsapp = preg_replace('/\D+/', '', (string) $settings['payment_admin_whatsapp']);
     if (str_starts_with($adminWhatsapp, '0')) $adminWhatsapp = '62' . substr($adminWhatsapp, 1);
@@ -68,13 +71,14 @@ try {
     $order['total_amount'] = (int) $order['total_amount'];
     $order['items'] = $orderItems;
     $order['payment'] = [
-        'qris_enabled' => $settings['payment_qris_enabled'] === '1',
-        'qris_image' => $settings['payment_qris_image'] ?: $paymentDefaults['payment_qris_image'],
-        'bank_enabled' => $settings['payment_bank_enabled'] === '1',
-        'bank_name' => $settings['payment_bank_name'],
-        'bank_account' => $settings['payment_bank_account'],
-        'bank_holder' => $settings['payment_bank_holder'],
-        'instruction' => $settings['payment_instruction'],
+        'available' => $paymentAvailable,
+        'qris_enabled' => $paymentAvailable && $qrisEnabled,
+        'qris_image' => $paymentAvailable && $qrisEnabled ? $settings['payment_qris_image'] : '',
+        'bank_enabled' => $paymentAvailable && $bankEnabled,
+        'bank_name' => $paymentAvailable && $bankEnabled ? $settings['payment_bank_name'] : '',
+        'bank_account' => $paymentAvailable && $bankEnabled ? $settings['payment_bank_account'] : '',
+        'bank_holder' => $paymentAvailable && $bankEnabled ? $settings['payment_bank_holder'] : '',
+        'instruction' => $paymentAvailable ? $settings['payment_instruction'] : '',
         'admin_whatsapp' => $adminWhatsapp,
         'whatsapp_message' => $whatsappMessage,
     ];

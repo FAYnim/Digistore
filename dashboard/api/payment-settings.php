@@ -11,14 +11,14 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
 }
 
 $defaults = [
-    'payment_qris_enabled' => '1',
-    'payment_qris_image' => 'https://placehold.co/400x400?text=QRIS+Dummy',
+    'payment_qris_enabled' => '0',
+    'payment_qris_image' => '',
     'payment_bank_enabled' => '0',
     'payment_bank_name' => '',
     'payment_bank_account' => '',
     'payment_bank_holder' => '',
-    'payment_instruction' => 'Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin melalui WhatsApp.',
-    'payment_admin_whatsapp' => '6281234567890',
+    'payment_instruction' => '',
+    'payment_admin_whatsapp' => '',
     'payment_whatsapp_message' => 'Halo admin, saya sudah membuat pesanan {order_code}. Mohon dicek.',
 ];
 
@@ -59,9 +59,10 @@ switch ($method) {
 
         if (!in_array($qrisEnabled, ['0', '1'], true)) $errors[] = 'Status QRIS tidak valid';
         if (!in_array($bankEnabled, ['0', '1'], true)) $errors[] = 'Status bank transfer tidak valid';
+        if ($qrisEnabled === '0' && $bankEnabled === '0') $errors[] = 'Aktifkan minimal satu metode pembayaran';
         if ($qrisEnabled === '1' && $qrisImage === '') $errors[] = 'QRIS Image URL wajib diisi';
         if ($qrisImage !== '' && (strlen($qrisImage) > 255 || !filter_var($qrisImage, FILTER_VALIDATE_URL) || parse_url($qrisImage, PHP_URL_SCHEME) !== 'https')) $errors[] = 'QRIS Image URL harus https valid maksimal 255 karakter';
-        if ($instruction === '') $errors[] = 'Instruksi pembayaran wajib diisi';
+        if (($qrisEnabled === '1' || $bankEnabled === '1') && $instruction === '') $errors[] = 'Instruksi pembayaran wajib diisi';
         if (strlen($instruction) > 1000) $errors[] = 'Instruksi pembayaran maksimal 1000 karakter';
         if ($adminWhatsapp === '') $errors[] = 'Nomor WhatsApp admin wajib diisi';
         if ($adminWhatsapp !== '' && !ctype_digit($adminWhatsapp)) $errors[] = 'Nomor WhatsApp admin hanya boleh angka';
