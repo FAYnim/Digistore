@@ -232,10 +232,9 @@ async function renderProducts() {
        <td>
          <div class="flex items-center gap-3">
            <img class="h-12 w-12 rounded-xl object-cover" src="${p.image_url || 'https://placehold.co/100'}" loading="lazy" alt="">
-           <div>
-             <p class="font-black">${p.name}</p>
-             <p class="text-xs text-slate-500 dark:text-slate-400">${p.badge || ''}</p>
-           </div>
+            <div>
+              <p class="font-black">${p.name}</p>
+            </div>
          </div>
        </td>
        <td class="font-bold">${rupiah(p.price)}</td>
@@ -272,7 +271,6 @@ window.editProduct = async (id) => {
   $('#productOriginalPrice').value   = p.original_price || '';
   $('#productStock').value           = p.stock;
   $('#productStatus').value          = p.status;
-  $('#productBadge').value           = p.badge || '';
   $('#productImage').value           = p.image_url || '';
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
@@ -309,7 +307,6 @@ function initProducts() {
       original_price: $('#productOriginalPrice').value ? parseInt($('#productOriginalPrice').value) : null,
       stock:          parseInt($('#productStock').value),
       image_url:      $('#productImage').value,
-      badge:          $('#productBadge').value,
       status:         $('#productStatus').value,
       is_featured:    $('#productFeatured').checked,
     };

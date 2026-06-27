@@ -51,7 +51,6 @@ CREATE TABLE products (
   original_price INT DEFAULT NULL,
   stock          INT NOT NULL DEFAULT 0,
   image_url      VARCHAR(255) DEFAULT NULL,
-  badge          VARCHAR(50) DEFAULT NULL,
   status         ENUM('active', 'draft', 'out_of_stock') DEFAULT 'draft',
   is_featured    TINYINT(1) DEFAULT 0,
   sold_count     INT DEFAULT 0,

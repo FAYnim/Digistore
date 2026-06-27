@@ -47,7 +47,6 @@ function validate_product_payload(array $body, bool $partial = false): array
         $url = trim((string) $body['image_url']);
         if (strlen($url) > 255 || !filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') $errors[] = 'image_url harus URL https valid maksimal 255 karakter';
     }
-    if (array_key_exists('badge', $body) && strlen(trim((string) $body['badge'])) > 50) $errors[] = 'badge maksimal 50 karakter';
     if (array_key_exists('description', $body) && strlen(trim((string) $body['description'])) > 5000) $errors[] = 'description maksimal 5000 karakter';
 
     return $errors;
@@ -168,8 +167,8 @@ switch ($method) {
 
         $stmt = $pdo->prepare(
             'INSERT INTO products
-               (category_id, name, slug, description, price, original_price, stock, image_url, badge, status, is_featured)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+               (category_id, name, slug, description, price, original_price, stock, image_url, status, is_featured)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $catId,
@@ -180,7 +179,6 @@ switch ($method) {
             isset($body['original_price']) ? (int) $body['original_price'] : null,
             (int)   $body['stock'],
             $body['image_url']      ?? null,
-            $body['badge']          ?? null,
             $body['status']         ?? 'draft',
             !empty($body['is_featured']) ? 1 : 0,
         ]);
@@ -226,7 +224,7 @@ switch ($method) {
         $stmt = $pdo->prepare(
             'UPDATE products SET
                category_id=?, name=?, slug=?, description=?, price=?, original_price=?,
-               stock=?, image_url=?, badge=?, status=?, is_featured=?
+               stock=?, image_url=?, status=?, is_featured=?
              WHERE id=?'
         );
         $stmt->execute([
@@ -240,7 +238,6 @@ switch ($method) {
                 : $current['original_price'],
             isset($body['stock'])          ? (int) $body['stock']          : (int) $current['stock'],
             array_key_exists('image_url', $body) ? $body['image_url']     : $current['image_url'],
-            array_key_exists('badge', $body)     ? $body['badge']         : $current['badge'],
             $body['status']     ?? $current['status'],
             isset($body['is_featured'])    ? ($body['is_featured'] ? 1 : 0) : (int) $current['is_featured'],
             $id,

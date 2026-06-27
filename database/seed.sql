@@ -27,16 +27,16 @@ INSERT INTO categories (name, slug, icon, status, sort_order) VALUES
 -- products
 -- ------------------------------------------------------------
 INSERT INTO products
-  (category_id, name, slug, description, price, original_price, stock, image_url, badge, status, is_featured, sold_count, rating)
+  (category_id, name, slug, description, price, original_price, stock, image_url, status, is_featured, sold_count, rating)
 VALUES
-(4, 'Google AI Pro 12 Bulan',   'google-ai-pro-12-bulan',   'Akses tools AI premium siap pakai. Optimal untuk produktivitas harian.',            25000,  50000, 12, 'https://placehold.co/600x400/6366f1/ffffff?text=Google+AI+Pro',   'Best Seller',  'active', 1, 320, 4.9),
-(1, 'ChatGPT Plus Sharing',     'chatgpt-plus-sharing',     'Akun sharing premium untuk produktivitas maksimal.',                                  45000,  75000,  8, 'https://placehold.co/600x400/10b981/ffffff?text=ChatGPT+Plus',    'Popular',      'active', 1, 210, 4.8),
-(1, 'Netflix Premium 1 Bulan',  'netflix-premium-1-bulan',  'Akun hiburan premium aktif cepat. Bisa dipakai langsung.',                            35000,  60000,  4, 'https://placehold.co/600x400/ef4444/ffffff?text=Netflix',          'Limited',      'active', 1, 185, 4.7),
-(1, 'Canva Pro Edu',            'canva-pro-edu',             'Desain cepat dengan akses Canva Pro penuh.',                                          20000,  40000,  0, 'https://placehold.co/600x400/f59e0b/ffffff?text=Canva+Pro',        'Hemat',        'out_of_stock', 0, 98, 4.6),
-(2, 'Source Code Toko Online',  'source-code-toko-online',  'Template toko online siap modifikasi, teknologi modern.',                             99000, 150000, 20, 'https://placehold.co/600x400/3b82f6/ffffff?text=Source+Code',     'Recommended',  'active', 0, 55, 4.5),
-(3, 'Template Landing SaaS',    'template-landing-saas',    'Landing page modern untuk produk digital, desain premium.',                            79000, 120000, 14, 'https://placehold.co/600x400/8b5cf6/ffffff?text=Landing+SaaS',    'New',          'draft',  0, 12, 4.3),
-(4, 'Midjourney 1 Bulan',       'midjourney-1-bulan',       'Akses Midjourney untuk generate gambar AI berkualitas tinggi.',                        55000,  90000,  6, 'https://placehold.co/600x400/ec4899/ffffff?text=Midjourney',       'Trending',     'active', 1, 143, 4.8),
-(6, 'Notion Pro Template',      'notion-pro-template',      'Template Notion lengkap untuk manajemen proyek dan produktivitas.',                    15000,  30000, 50, 'https://placehold.co/600x400/14b8a6/ffffff?text=Notion+Pro',      'Hemat',        'active', 0, 76, 4.4);
+(4, 'Google AI Pro 12 Bulan',   'google-ai-pro-12-bulan',   'Akses tools AI premium siap pakai. Optimal untuk produktivitas harian.',            25000,  50000, 12, 'https://placehold.co/600x400/6366f1/ffffff?text=Google+AI+Pro',   'active', 1, 320, 4.9),
+(1, 'ChatGPT Plus Sharing',     'chatgpt-plus-sharing',     'Akun sharing premium untuk produktivitas maksimal.',                                  45000,  75000,  8, 'https://placehold.co/600x400/10b981/ffffff?text=ChatGPT+Plus',    'active', 1, 210, 4.8),
+(1, 'Netflix Premium 1 Bulan',  'netflix-premium-1-bulan',  'Akun hiburan premium aktif cepat. Bisa dipakai langsung.',                            35000,  60000,  4, 'https://placehold.co/600x400/ef4444/ffffff?text=Netflix',          'active', 1, 185, 4.7),
+(1, 'Canva Pro Edu',            'canva-pro-edu',             'Desain cepat dengan akses Canva Pro penuh.',                                          20000,  40000,  0, 'https://placehold.co/600x400/f59e0b/ffffff?text=Canva+Pro',        'out_of_stock', 0, 98, 4.6),
+(2, 'Source Code Toko Online',  'source-code-toko-online',  'Template toko online siap modifikasi, teknologi modern.',                             99000, 150000, 20, 'https://placehold.co/600x400/3b82f6/ffffff?text=Source+Code',     'active', 0, 55, 4.5),
+(3, 'Template Landing SaaS',    'template-landing-saas',    'Landing page modern untuk produk digital, desain premium.',                            79000, 120000, 14, 'https://placehold.co/600x400/8b5cf6/ffffff?text=Landing+SaaS',    'draft',  0, 12, 4.3),
+(4, 'Midjourney 1 Bulan',       'midjourney-1-bulan',       'Akses Midjourney untuk generate gambar AI berkualitas tinggi.',                        55000,  90000,  6, 'https://placehold.co/600x400/ec4899/ffffff?text=Midjourney',       'active', 1, 143, 4.8),
+(6, 'Notion Pro Template',      'notion-pro-template',      'Template Notion lengkap untuk manajemen proyek dan produktivitas.',                    15000,  30000, 50, 'https://placehold.co/600x400/14b8a6/ffffff?text=Notion+Pro',      'active', 0, 76, 4.4);
 
 -- ------------------------------------------------------------
 -- orders
