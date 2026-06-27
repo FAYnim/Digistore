@@ -47,7 +47,7 @@ $token = csrf_token();
           <span class="mb-3 block text-sm font-bold text-slate-800 dark:text-slate-200">Username</span>
           <span class="relative block">
             <i class="fa-regular fa-user absolute left-5 top-1/2 -translate-y-1/2 text-lg text-slate-400"></i>
-            <input class="w-full rounded-xl border border-slate-200 bg-white py-4 pl-14 pr-5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950 dark:text-white" type="text" name="username" autocomplete="username" placeholder="admin" required>
+            <input class="w-full rounded-xl border border-slate-200 bg-white py-4 pl-14 pr-5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-slate-950 dark:text-white" type="text" name="username" autocomplete="username" placeholder="admin" autofocus required>
           </span>
         </label>
         <label class="block">
