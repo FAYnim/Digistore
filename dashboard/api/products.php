@@ -53,6 +53,36 @@ function validate_product_payload(array $body, bool $partial = false): array
     return $errors;
 }
 
+function default_product_category_id(PDO $pdo): int
+{
+    $slug = 'akun-premium';
+
+    $stmt = $pdo->prepare('SELECT id FROM categories WHERE slug = ? LIMIT 1');
+    $stmt->execute([$slug]);
+    $row = $stmt->fetch();
+    if ($row) return (int) $row['id'];
+
+    $insert = $pdo->prepare(
+        'INSERT INTO categories (name, slug, icon, status, sort_order)
+         VALUES (?, ?, ?, ?, ?)'
+    );
+    $insert->execute(['Akun Premium', $slug, 'fa-solid fa-crown', 'active', 1]);
+
+    return (int) $pdo->lastInsertId();
+}
+
+function product_category_id_from_payload(PDO $pdo, array $body): int
+{
+    if (empty($body['category_id'])) return default_product_category_id($pdo);
+
+    $catId = (int) $body['category_id'];
+    $catChk = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
+    $catChk->execute([$catId]);
+    if (!$catChk->fetch()) json_error('category_id tidak valid', null, 422);
+
+    return $catId;
+}
+
 switch ($method) {
 
     // ----------------------------------------------------------------
@@ -134,13 +164,7 @@ switch ($method) {
         $chk->execute([$body['slug']]);
         if ($chk->fetch()) json_error('Slug sudah digunakan', null, 409);
 
-        // Validasi category_id jika diisi
-        $catId = !empty($body['category_id']) ? (int) $body['category_id'] : null;
-        if ($catId) {
-            $catChk = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
-            $catChk->execute([$catId]);
-            if (!$catChk->fetch()) json_error('category_id tidak valid', null, 422);
-        }
+        $catId = product_category_id_from_payload($pdo, $body);
 
         $stmt = $pdo->prepare(
             'INSERT INTO products
@@ -196,8 +220,8 @@ switch ($method) {
         }
 
         $catId = array_key_exists('category_id', $body)
-            ? (!empty($body['category_id']) ? (int) $body['category_id'] : null)
-            : $current['category_id'];
+            ? product_category_id_from_payload($pdo, $body)
+            : default_product_category_id($pdo);
 
         $stmt = $pdo->prepare(
             'UPDATE products SET

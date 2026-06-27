@@ -2,7 +2,6 @@
 $navItems = [
     ['label' => 'Overview', 'href' => 'index.php', 'key' => 'overview', 'icon' => 'fa-solid fa-gauge-high'],
     ['label' => 'Produk', 'href' => 'products.php', 'key' => 'products', 'icon' => 'fa-solid fa-box'],
-    ['label' => 'Kategori', 'href' => 'categories.php', 'key' => 'categories', 'icon' => 'fa-solid fa-tags'],
     ['label' => 'Pesanan', 'href' => 'orders.php', 'key' => 'orders', 'icon' => 'fa-solid fa-receipt'],
     ['label' => 'Pembayaran', 'href' => 'settings-payment.php', 'key' => 'payment-settings', 'icon' => 'fa-solid fa-qrcode'],
     ['label' => 'Testimoni', 'href' => 'testimonials.php', 'key' => 'testimonials', 'icon' => 'fa-solid fa-comments'],
