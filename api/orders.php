@@ -16,6 +16,7 @@ try {
     $order = $stmt->fetch();
 
     if (!$order) json_error('Order tidak ditemukan.', null, 404);
+    if ($order['status'] === 'pending') $order['status'] = 'pending_payment';
 
     $items = $pdo->prepare('SELECT product_name, quantity, price, subtotal FROM order_items WHERE order_id = ?');
     $items->execute([(int) $order['id']]);
@@ -49,8 +50,12 @@ try {
 
     $statusLabels = [
         'pending' => 'Menunggu Pembayaran',
+        'pending_payment' => 'Menunggu Pembayaran',
         'paid' => 'Pembayaran Diterima',
+        'processing' => 'Diproses',
+        'delivered' => 'Dikirim',
         'completed' => 'Selesai',
+        'expired' => 'Expired',
         'cancelled' => 'Dibatalkan',
     ];
     $qrisEnabled = $settings['payment_qris_enabled'] === '1' && trim((string) $settings['payment_qris_image']) !== '';

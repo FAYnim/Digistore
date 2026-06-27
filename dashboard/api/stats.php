@@ -28,7 +28,7 @@ $i = $pdo->prepare(
     'SELECT COALESCE(SUM(total_amount), 0) AS total_income,
             COALESCE(SUM(CASE WHEN DATE(created_at) = ? THEN total_amount ELSE 0 END), 0) AS today_income
      FROM orders
-     WHERE status IN ("paid", "completed")'
+     WHERE status IN ("paid", "processing", "delivered", "completed")'
 );
 $i->execute([$today]);
 $income = $i->fetch();
@@ -46,7 +46,7 @@ for ($day = 6; $day >= 0; $day--) {
 $ic = $pdo->prepare(
     'SELECT DATE(created_at) AS order_date, COALESCE(SUM(total_amount), 0) AS total
      FROM orders
-     WHERE status IN ("paid", "completed")
+     WHERE status IN ("paid", "processing", "delivered", "completed")
        AND DATE(created_at) BETWEEN ? AND ?
      GROUP BY DATE(created_at)'
 );
@@ -63,7 +63,7 @@ $pp = $pdo->query(
     'SELECT COALESCE(SUM(oi.quantity), 0) AS processing_products
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
-     WHERE o.status = "paid"'
+     WHERE o.status IN ("paid", "processing")'
 );
 $processingProducts = $pp->fetch();
 
@@ -102,9 +102,13 @@ $os = $pdo->query(
 );
 $orderStatusChart = array_map(function ($row) {
     $labels = [
-        'pending'   => 'Menunggu',
-        'paid'      => 'Dibayar',
+        'pending' => 'Menunggu Pembayaran',
+        'pending_payment' => 'Menunggu Pembayaran',
+        'paid' => 'Pembayaran Diterima',
+        'processing' => 'Diproses',
+        'delivered' => 'Dikirim',
         'completed' => 'Selesai',
+        'expired' => 'Expired',
         'cancelled' => 'Batal',
     ];
 

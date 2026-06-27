@@ -17,7 +17,13 @@ if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
     csrf_validate_request();
 }
 
-$validStatuses = ['pending', 'paid', 'completed', 'cancelled'];
+$validStatuses = ['pending_payment', 'paid', 'processing', 'delivered', 'completed', 'expired', 'cancelled'];
+$legacyStatusMap = ['pending' => 'pending_payment'];
+
+function normalize_order_status(array &$order): void
+{
+    if (($order['status'] ?? '') === 'pending') $order['status'] = 'pending_payment';
+}
 
 switch ($method) {
 
@@ -31,6 +37,7 @@ switch ($method) {
             $stmt->execute([$id]);
             $order = $stmt->fetch();
             if (!$order) json_error('Pesanan tidak ditemukan', null, 404);
+            normalize_order_status($order);
 
             // Ambil order items
             $items = $pdo->prepare('SELECT * FROM order_items WHERE order_id = ?');
@@ -45,9 +52,13 @@ switch ($method) {
         $conditions = [];
         $params     = [];
 
-        if (!empty($_GET['status']) && in_array($_GET['status'], $validStatuses, true)) {
-            $conditions[] = 'o.status = ?';
-            $params[]     = $_GET['status'];
+        if (!empty($_GET['status'])) {
+            $filterStatus = $legacyStatusMap[$_GET['status']] ?? $_GET['status'];
+            if (in_array($filterStatus, $validStatuses, true)) {
+                $conditions[] = $filterStatus === 'pending_payment' ? 'o.status IN (?, ?)' : 'o.status = ?';
+                $params[] = $filterStatus === 'pending_payment' ? 'pending_payment' : $filterStatus;
+                if ($filterStatus === 'pending_payment') $params[] = 'pending';
+            }
         }
         if (!empty($_GET['search'])) {
             $conditions[] = '(o.order_code LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ? OR o.customer_phone LIKE ?)';
@@ -64,6 +75,7 @@ switch ($method) {
         $rows = $stmt->fetchAll();
 
         foreach ($rows as &$row) {
+            normalize_order_status($row);
             $row['total_amount'] = (int) $row['total_amount'];
             $row['items_count'] = (int) $row['items_count'];
             $row['items_summary'] = $row['items_count'] > 1 ? $row['items_count'] . ' produk' : ($row['items_summary'] ?: '—');
@@ -85,17 +97,19 @@ switch ($method) {
 
         $body = json_body();
         if (empty($body['status'])) json_error('status wajib diisi', null, 422);
-        if (!in_array($body['status'], $validStatuses, true)) {
+        $status = $legacyStatusMap[$body['status']] ?? $body['status'];
+        if (!in_array($status, $validStatuses, true)) {
             json_error('status hanya boleh: ' . implode(', ', $validStatuses), null, 422);
         }
         $deliveryNote = isset($body['delivery_note']) ? trim((string) $body['delivery_note']) : null;
 
         $stmt = $pdo->prepare('UPDATE orders SET status = ?, delivery_note = ? WHERE id = ?');
-        $stmt->execute([$body['status'], $deliveryNote, $id]);
+        $stmt->execute([$status, $deliveryNote, $id]);
 
         $updated = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
         $updated->execute([$id]);
         $result = $updated->fetch();
+        normalize_order_status($result);
         $result['total_amount'] = (int) $result['total_amount'];
 
         json_success('Status pesanan berhasil diperbarui', $result);

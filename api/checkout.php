@@ -69,7 +69,7 @@ try {
         $subtotal,
         'QRIS',
         $deadline,
-        'pending',
+        'pending_payment',
         $note !== '' ? $note : null,
     ]);
 

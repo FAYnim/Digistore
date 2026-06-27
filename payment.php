@@ -60,8 +60,12 @@
     const code = new URLSearchParams(window.location.search).get("code");
     const statusLabels = {
       pending: "Menunggu Pembayaran",
+      pending_payment: "Menunggu Pembayaran",
       paid: "Pembayaran Diterima",
+      processing: "Diproses",
+      delivered: "Dikirim",
       completed: "Selesai",
+      expired: "Expired",
       cancelled: "Dibatalkan",
     };
 

@@ -43,7 +43,7 @@ VALUES
 -- ------------------------------------------------------------
 INSERT INTO orders (order_code, customer_name, customer_email, customer_phone, total_amount, payment_method, payment_deadline, status, note, delivery_note) VALUES
 ('ORD-20260624-001', 'Raka Pratama',  'raka@mail.test',   '6281234567890', 25000, 'QRIS',     '2026-06-24 23:59:00', 'paid',      NULL, NULL),
-('ORD-20260624-002', 'Nadia Putri',   'nadia@mail.test',  '6281234567891', 45000, 'Transfer', '2026-06-24 23:59:00', 'pending',   NULL, NULL),
+('ORD-20260624-002', 'Nadia Putri',   'nadia@mail.test',  '6281234567891', 45000, 'Transfer', '2026-06-24 23:59:00', 'pending_payment',   NULL, NULL),
 ('ORD-20260623-003', 'Dimas Arya',    'dimas@mail.test',  '6281234567892', 35000, 'E-Wallet', '2026-06-23 23:59:00', 'completed', NULL, 'Produk sudah dikirim oleh admin.'),
 ('ORD-20260623-004', 'Sari Dewi',     'sari@mail.test',   '6281234567893', 55000, 'QRIS',     '2026-06-23 23:59:00', 'paid',      'Tolong kirim cepat', NULL),
 ('ORD-20260622-005', 'Budi Santoso',  'budi@mail.test',   '6281234567894', 20000, 'Transfer', '2026-06-22 23:59:00', 'cancelled', 'Dibatalkan pembeli', NULL),

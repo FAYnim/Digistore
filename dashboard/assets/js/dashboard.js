@@ -12,14 +12,14 @@ const slugify = (s) => s.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/
 const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}` : s;
 
 function statusLabel(s) {
-  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu', paid: 'Dibayar', completed: 'Selesai', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
+  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
   return map[s] ?? s;
 }
 
 function badgeClass(s) {
-  if (['active', 'paid', 'completed', 'visible'].includes(s)) return 'badge-green';
-  if (['pending', 'draft'].includes(s))                        return 'badge-yellow';
-  if (['out_of_stock', 'cancelled', 'hidden'].includes(s))    return 'badge-red';
+  if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible'].includes(s)) return 'badge-green';
+  if (['pending', 'pending_payment', 'draft'].includes(s)) return 'badge-yellow';
+  if (['out_of_stock', 'expired', 'cancelled', 'hidden'].includes(s)) return 'badge-red';
   return 'badge-gray';
 }
 

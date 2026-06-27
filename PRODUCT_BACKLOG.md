@@ -55,7 +55,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 5. Perbaiki status order agar lebih representatif
 
-- **Status:** Belum
+- **Status:** Selesai
 - **Prioritas:** High
 - **Kompleksitas:** Medium
 - **Dependensi:** Payment confirmation, order timeline

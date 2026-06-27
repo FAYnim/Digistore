@@ -11,9 +11,12 @@ renderHeader($pageTitle, $activePage);
       <input class="input" id="orderSearch" placeholder="Cari kode order, nama, email, atau nomor HP" type="search">
       <select class="select" id="orderStatusFilter">
         <option value="">Semua status</option>
-        <option value="pending">Menunggu</option>
-        <option value="paid">Dibayar</option>
+        <option value="pending_payment">Menunggu Pembayaran</option>
+        <option value="paid">Pembayaran Diterima</option>
+        <option value="processing">Diproses</option>
+        <option value="delivered">Dikirim</option>
         <option value="completed">Selesai</option>
+        <option value="expired">Expired</option>
         <option value="cancelled">Dibatalkan</option>
       </select>
     </div>
@@ -33,9 +36,12 @@ renderHeader($pageTitle, $activePage);
     <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
       <label class="font-bold">Ubah Status
         <select class="select mt-1" id="orderStatusSelect">
-          <option value="pending">Menunggu</option>
-          <option value="paid">Dibayar</option>
+          <option value="pending_payment">Menunggu Pembayaran</option>
+          <option value="paid">Pembayaran Diterima</option>
+          <option value="processing">Diproses</option>
+          <option value="delivered">Dikirim</option>
           <option value="completed">Selesai</option>
+          <option value="expired">Expired</option>
           <option value="cancelled">Dibatalkan</option>
         </select>
       </label>
