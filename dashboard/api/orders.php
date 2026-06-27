@@ -45,7 +45,7 @@ switch ($method) {
             $order['items']        = $items->fetchAll();
             $order['total_amount'] = (int) $order['total_amount'];
 
-            $confirmations = $pdo->prepare('SELECT id, sender_name, payment_method, paid_at, note, proof_path, verification_status, admin_note, verified_by, verified_at, created_at FROM payment_confirmations WHERE order_id = ? ORDER BY created_at DESC');
+            $confirmations = $pdo->prepare('SELECT id, sender_name, payment_method, note, proof_path, verification_status, admin_note, verified_by, verified_at, created_at FROM payment_confirmations WHERE order_id = ? ORDER BY created_at DESC');
             $confirmations->execute([$id]);
             $order['payment_confirmations'] = $confirmations->fetchAll();
 

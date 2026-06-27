@@ -184,9 +184,7 @@
               <option value="Lainnya">Lainnya</option>
             </select>
           </label>
-          <label class="field-label">Waktu Bayar
-            <input class="control mt-2" name="paid_at" type="datetime-local" required>
-          </label>
+
           <label class="field-label">Bukti Bayar
             <input class="control file-control mt-2" name="proof" type="file" accept="image/jpeg,image/png,application/pdf" required>
           </label>

@@ -127,7 +127,6 @@ CREATE TABLE payment_confirmations (
   order_id       INT NOT NULL,
   sender_name    VARCHAR(100) NOT NULL,
   payment_method VARCHAR(50) NOT NULL,
-  paid_at        DATETIME NOT NULL,
   note           TEXT DEFAULT NULL,
   proof_path     VARCHAR(255) NOT NULL,
   verification_status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',

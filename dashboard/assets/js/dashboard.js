@@ -533,7 +533,6 @@ window.showOrder = async (id) => {
           <div class="grid gap-2 border-b border-emerald-100 py-3 text-sm last:border-b-0 dark:border-emerald-900">
             <div class="flex justify-between gap-4"><span class="font-bold">Nama Pengirim</span><span>${escapeHtml(c.sender_name)}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Metode</span><span>${escapeHtml(c.payment_method)}</span></div>
-            <div class="flex justify-between gap-4"><span class="font-bold">Waktu Bayar</span><span>${escapeHtml(c.paid_at)}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Catatan</span><span>${escapeHtml(c.note || '—')}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Status Verifikasi</span><span>${badge(c.verification_status || 'pending')}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Catatan Admin</span><span>${escapeHtml(c.admin_note || '—')}</span></div>

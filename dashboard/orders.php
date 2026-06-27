@@ -21,7 +21,20 @@ renderHeader($pageTitle, $activePage);
       </select>
     </div>
   </div>
-  <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Customer</th><th>Produk</th><th>Total</th><th>Status</th><th>Verifikasi</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="ordersTable"></tbody></table></div>
+  <div class="card overflow-hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <span>Daftar pesanan</span>
+      <span class="text-xs font-semibold md:hidden">Geser tabel →</span>
+    </div>
+    <div class="table-wrap orders-table-wrap">
+      <table class="orders-table">
+        <thead>
+          <tr><th>Kode</th><th>Customer</th><th>Produk</th><th>Total</th><th>Status</th><th>Verifikasi</th><th>Tanggal</th><th>Aksi</th></tr>
+        </thead>
+        <tbody id="ordersTable"></tbody>
+      </table>
+    </div>
+  </div>
 </section>
 
 <!-- Modal Detail Order -->

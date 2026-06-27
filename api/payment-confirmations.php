@@ -9,17 +9,11 @@ rate_limit('payment-confirmation:' . rate_limit_identifier(), 10, 300);
 $orderCode = strtoupper(trim($_POST['order_code'] ?? ''));
 $senderName = trim($_POST['sender_name'] ?? '');
 $paymentMethod = trim($_POST['payment_method'] ?? '');
-$paidAt = trim($_POST['paid_at'] ?? '');
 $note = trim($_POST['note'] ?? '');
 
 if ($orderCode === '' || strlen($orderCode) > 50 || !preg_match('/^[A-Z0-9-]+$/', $orderCode)) json_error('Kode order tidak valid.', null, 422);
 if ($senderName === '' || mb_strlen($senderName) > 100) json_error('Nama pengirim wajib diisi.', null, 422);
 if ($paymentMethod === '' || mb_strlen($paymentMethod) > 50) json_error('Metode pembayaran wajib diisi.', null, 422);
-if ($paidAt === '') json_error('Waktu bayar wajib diisi.', null, 422);
-
-$timestamp = strtotime($paidAt);
-if ($timestamp === false) json_error('Waktu bayar tidak valid.', null, 422);
-$paidAtSql = date('Y-m-d H:i:s', $timestamp);
 
 if (empty($_FILES['proof']) || !is_uploaded_file($_FILES['proof']['tmp_name'])) json_error('Bukti bayar wajib diupload.', null, 422);
 if ($_FILES['proof']['error'] !== UPLOAD_ERR_OK) json_error('Upload bukti bayar gagal.', null, 422);
@@ -51,12 +45,11 @@ try {
 
     if (!move_uploaded_file($_FILES['proof']['tmp_name'], $targetPath)) json_error('Gagal menyimpan bukti bayar.', null, 500);
 
-    $insert = $pdo->prepare('INSERT INTO payment_confirmations (order_id, sender_name, payment_method, paid_at, note, proof_path) VALUES (?, ?, ?, ?, ?, ?)');
+    $insert = $pdo->prepare('INSERT INTO payment_confirmations (order_id, sender_name, payment_method, note, proof_path) VALUES (?, ?, ?, ?, ?)');
     $insert->execute([
         (int) $order['id'],
         $senderName,
         $paymentMethod,
-        $paidAtSql,
         $note !== '' ? $note : null,
         $relativePath,
     ]);
