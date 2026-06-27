@@ -218,7 +218,7 @@ $("#sortSelect").addEventListener("change", (event) => { state.sort = event.targ
 document.addEventListener("click", (event) => {
   const detail = event.target.closest("[data-detail]");
   const buy = event.target.closest("[data-buy]");
-  if (detail && detail.dataset.detail) window.location.href = `checkout.php?product=${encodeURIComponent(detail.dataset.detail)}`;
+  if (detail && detail.dataset.detail) window.location.href = `product.php?slug=${encodeURIComponent(detail.dataset.detail)}`;
   if (buy && buy.dataset.buy) window.location.href = `checkout.php?product=${encodeURIComponent(buy.dataset.buy)}`;
 });
 
