@@ -114,8 +114,8 @@
 
               <div class="pt-2">
                 ${p.stock > 0
-                  ? '<a href="checkout.php?product=' + encodeURIComponent(p.slug) + '" class="primary-btn block w-full text-center">Beli Sekarang</a>'
-                  : '<button disabled class="primary-btn block w-full text-center opacity-50 cursor-not-allowed">Stok Habis</button>'
+                  ? '<a href="checkout.php?product=' + encodeURIComponent(p.slug) + '" class="primary-btn inline-flex w-full text-center">Beli Sekarang</a>'
+                  : '<button disabled class="primary-btn inline-flex w-full text-center opacity-50 cursor-not-allowed">Stok Habis</button>'
                 }
               </div>
 

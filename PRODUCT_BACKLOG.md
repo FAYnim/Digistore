@@ -45,7 +45,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 4. Perbaiki flow tombol “Lihat Detail”
 
-- **Status:** Belum
+- **Status:** Selesai
 - **Prioritas:** High
 - **Kompleksitas:** Small
 - **Dependensi:** Halaman detail produk
@@ -139,7 +139,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 1. Halaman detail produk
 
-- **Status:** Belum
+- **Status:** Selesai
 - **Prioritas:** High
 - **Kompleksitas:** Medium
 - **Dependensi:** Tidak ada
