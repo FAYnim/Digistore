@@ -91,6 +91,45 @@
       return "Selesaikan pembayaran dan konfirmasi ke admin.";
     }
 
+    function canSubmitPayment(order) {
+      return ["pending", "pending_payment"].includes(order.status);
+    }
+
+    function paymentStatusNotice(order) {
+      const status = statusLabels[order.status] || order.status;
+      if (["paid", "processing"].includes(order.status)) return `Pembayaran untuk order ini sudah diterima. Status saat ini: ${status}. Jangan lakukan pembayaran ulang.`;
+      if (["delivered", "completed"].includes(order.status)) return `Order ini sudah ${status.toLowerCase()}. Cek halaman status untuk detail pesanan.`;
+      if (["expired", "cancelled"].includes(order.status)) return `Order ini sudah ${status.toLowerCase()}. Jangan lakukan pembayaran untuk order ini.`;
+      return "";
+    }
+
+    function bindPaymentConfirmationForm() {
+      const form = document.querySelector("#paymentConfirmationForm");
+      if (!form) return;
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = "Mengirim...";
+
+        try {
+          const res = await fetch("api/payment-confirmations.php", { method: "POST", body: new FormData(form) });
+          const json = await res.json();
+          if (!json.success) throw new Error(json.message || "Gagal mengirim konfirmasi.");
+          document.querySelector("#message").textContent = json.message;
+          document.querySelector("#message").classList.remove("hidden", "text-[var(--danger)]");
+          document.querySelector("#message").classList.add("text-emerald-700");
+          form.reset();
+        } catch (error) {
+          showMessage(error.message || "Gagal mengirim konfirmasi.");
+        } finally {
+          button.disabled = false;
+          button.textContent = "Kirim Konfirmasi";
+        }
+      });
+    }
+
     async function loadOrder() {
       if (!code) return showMessage("Order tidak ditemukan.");
 
@@ -119,20 +158,50 @@
         </div>
       `;
 
+      const allowPayment = canSubmitPayment(order);
+      const notice = paymentStatusNotice(order);
+
       document.querySelector("#paymentCard").innerHTML = `
         <h2 class="font-display text-2xl font-extrabold">Pembayaran</h2>
         <p class="mt-2 text-sm text-[var(--muted)]">${escapeText(actionText)}</p>
         <p class="mt-5 font-display text-3xl font-extrabold">${rupiah.format(Number(order.total_amount || 0))}</p>
-        ${hasMethod ? "" : '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Pembayaran belum dikonfigurasi. Hubungi admin.</p>'}
-        ${hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
-        ${hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
-        ${hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
+        ${!allowPayment ? `<div class="mt-5 rounded-2xl border border-[var(--warning)] bg-yellow-50 p-4 text-left text-sm font-bold text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-200">${escapeText(notice)}</div>` : ""}
+        ${allowPayment && hasMethod ? "" : allowPayment ? '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Pembayaran belum dikonfigurasi. Hubungi admin.</p>' : ""}
+        ${allowPayment && hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
+        ${allowPayment && hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
+        ${allowPayment && hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
+        ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm">
+          <input type="hidden" name="order_code" value="${escapeText(order.order_code)}">
+          <label class="field-label">Nama Pengirim
+            <input class="control mt-2" name="sender_name" required maxlength="100" placeholder="Nama pemilik rekening/e-wallet">
+          </label>
+          <label class="field-label">Metode Pembayaran
+            <select class="control mt-2" name="payment_method" required>
+              <option value="">Pilih metode</option>
+              ${payment.qris_enabled ? '<option value="QRIS">QRIS</option>' : ''}
+              ${payment.bank_enabled ? '<option value="Transfer Bank">Transfer Bank</option>' : ''}
+              <option value="E-Wallet">E-Wallet</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </label>
+          <label class="field-label">Waktu Bayar
+            <input class="control mt-2" name="paid_at" type="datetime-local" required>
+          </label>
+          <label class="field-label">Bukti Bayar
+            <input class="control file-control mt-2" name="proof" type="file" accept="image/jpeg,image/png,application/pdf" required>
+          </label>
+          <label class="field-label">Catatan
+            <textarea class="control mt-2 min-h-28 resize-y py-3" name="note" placeholder="Opsional"></textarea>
+          </label>
+          <button class="primary-btn w-full text-center" type="submit">Kirim Konfirmasi</button>
+        </form>` : ""}
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
-          ${hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
+          ${hasWhatsapp ? `<a class="small-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
           <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
           <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
         </div>
       `;
+      bindPaymentConfirmationForm();
     }
 
     document.querySelector("#themeToggle").addEventListener("click", () => {

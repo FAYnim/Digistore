@@ -10,6 +10,7 @@ const $$ = (s) => [...document.querySelectorAll(s)];
 const rupiah = (v) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
 const slugify = (s) => s.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}` : s;
+const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 
 function statusLabel(s) {
   const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
@@ -519,6 +520,21 @@ window.showOrder = async (id) => {
           <div class="flex justify-between gap-4 border-b border-slate-100 py-1 dark:border-slate-800 text-sm">
             <span>${i.product_name} x${i.quantity}</span>
             <span class="font-bold">${rupiah(i.subtotal)}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  if (o.payment_confirmations?.length) {
+    $('#orderDetail').innerHTML += `
+      <div class="md:col-span-2 mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+        <p class="mb-3 font-black">Konfirmasi Pembayaran:</p>
+        ${o.payment_confirmations.map((c) => `
+          <div class="grid gap-2 border-b border-emerald-100 py-3 text-sm last:border-b-0 dark:border-emerald-900">
+            <div class="flex justify-between gap-4"><span class="font-bold">Nama Pengirim</span><span>${escapeHtml(c.sender_name)}</span></div>
+            <div class="flex justify-between gap-4"><span class="font-bold">Metode</span><span>${escapeHtml(c.payment_method)}</span></div>
+            <div class="flex justify-between gap-4"><span class="font-bold">Waktu Bayar</span><span>${escapeHtml(c.paid_at)}</span></div>
+            <div class="flex justify-between gap-4"><span class="font-bold">Catatan</span><span>${escapeHtml(c.note || '—')}</span></div>
+            <a class="btn-soft w-fit" href="../${encodeURI(c.proof_path)}" target="_blank" rel="noopener">Lihat Bukti</a>
           </div>`).join('')}
       </div>`;
   }
