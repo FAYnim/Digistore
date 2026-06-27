@@ -157,10 +157,14 @@ td { border-top: 1px solid rgb(226 232 240); padding: .7rem .85rem; font-size: .
 .orders-table { min-width: 980px; }
 .orders-table th,
 .orders-table td { padding: .85rem 1rem; }
+.orders-table th:nth-child(5),
+.orders-table td:nth-child(5) { min-width: 190px; }
+.orders-table th:nth-child(6),
+.orders-table td:nth-child(6) { min-width: 190px; }
 .orders-table tbody tr:hover { background: rgb(248 250 252); }
 .dark .orders-table tbody tr:hover { background: rgb(30 41 59 / .45); }
 
-.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .22rem .5rem; font-size: .72rem; font-weight: 800; }
+.badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .22rem .5rem; font-size: .72rem; font-weight: 800; white-space: nowrap; }
 .badge-green { background: rgb(220 252 231); color: rgb(21 128 61); }
 .badge-yellow { background: rgb(254 249 195); color: rgb(161 98 7); }
 .badge-red { background: rgb(254 226 226); color: rgb(185 28 28); }

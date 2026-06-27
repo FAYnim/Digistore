@@ -21,6 +21,10 @@ renderHeader($pageTitle, $activePage);
       </select>
     </div>
   </div>
+  <div class="rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
+    <p class="font-bold">Catatan status pesanan</p>
+    <p class="mt-1"><span class="font-semibold">Status</span> menunjukkan tahap proses pesanan, sedangkan <span class="font-semibold">Verifikasi</span> menunjukkan kondisi pengecekan pembayaran/admin.</p>
+  </div>
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
       <span>Daftar pesanan</span>
