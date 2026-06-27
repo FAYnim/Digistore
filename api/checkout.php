@@ -35,24 +35,30 @@ if ($customerPhone === '') json_error('WhatsApp wajib diisi.', null, 422);
 if ($customerEmail !== '' && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) json_error('Email tidak valid.', null, 422);
 
 try {
-    $stmt = $pdo->prepare('SELECT id, name, price, stock, status FROM products WHERE id = ? LIMIT 1');
-    $stmt->execute([$productId]);
-    $product = $stmt->fetch();
-
-    if (!$product || $product['status'] !== 'active' || (int) $product['stock'] <= 0) {
-        json_error('Produk tidak tersedia', null, 422);
-    }
-
-    if ((int) $product['stock'] < $quantity) {
-        json_error('Stok produk tidak cukup', null, 422);
-    }
-
-    $price = (int) $product['price'];
-    $subtotal = $price * $quantity;
     $orderCode = generate_order_code($pdo);
     $deadline = date('Y-m-d 23:59:00', strtotime('+1 day'));
 
     $pdo->beginTransaction();
+
+    $stmt = $pdo->prepare('SELECT id, name, price, stock, status FROM products WHERE id = ? FOR UPDATE');
+    $stmt->execute([$productId]);
+    $product = $stmt->fetch();
+
+    if (!$product || $product['status'] !== 'active' || (int) $product['stock'] < $quantity) {
+        $pdo->rollBack();
+        json_error('Produk tidak tersedia atau stok tidak cukup', null, 422);
+    }
+
+    $price = (int) $product['price'];
+    $subtotal = $price * $quantity;
+
+    $stock = $pdo->prepare("UPDATE products SET stock = stock - ?, status = IF(stock - ? <= 0, 'out_of_stock', status) WHERE id = ? AND status = 'active' AND stock >= ?");
+    $stock->execute([$quantity, $quantity, $productId, $quantity]);
+
+    if ($stock->rowCount() !== 1) {
+        $pdo->rollBack();
+        json_error('Stok produk tidak cukup', null, 422);
+    }
 
     $order = $pdo->prepare('INSERT INTO orders (order_code, customer_name, customer_email, customer_phone, total_amount, payment_method, payment_deadline, status, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $order->execute([
