@@ -163,7 +163,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 - **Prioritas:** Critical
 - **Kompleksitas:** Medium
 - **Dependensi:** Payment confirmation internal
-- **Tujuan:** Tambahkan queue admin untuk menerima, menolak, atau meminta pembayaran ulang.
+- **Tujuan:** Tambahkan queue admin untuk menerima atau menolak konfirmasi pembayaran.
 - **Alasan:** Bukti bayar perlu workflow verifikasi jelas.
 - **Manfaat:** Proses pembayaran lebih terkontrol dan transparan.
 

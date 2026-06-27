@@ -3,7 +3,7 @@
  * API: Orders
  * GET    /dashboard/api/orders.php              — list pesanan (+ filter: status, search)
  * GET    /dashboard/api/orders.php?id=N         — detail pesanan + order items
- * PUT    /dashboard/api/orders.php?id=N         — update status dan delivery note pesanan
+ * PUT    /dashboard/api/orders.php?id=N         — update delivery note pesanan
  */
 
 require_once __DIR__ . '/../auth/check-auth.php';
@@ -94,17 +94,33 @@ switch ($method) {
     // POST — verifikasi pembayaran
     // ----------------------------------------------------------------
     case 'POST':
+        if (($_GET['action'] ?? '') === 'complete_order') {
+            $body = json_body();
+            $orderId = (int) ($body['order_id'] ?? 0);
+            if ($orderId <= 0) json_error('order_id wajib diisi', null, 422);
+
+            $stmt = $pdo->prepare('SELECT id, status, delivery_note FROM orders WHERE id = ? LIMIT 1');
+            $stmt->execute([$orderId]);
+            $order = $stmt->fetch();
+            if (!$order) json_error('Pesanan tidak ditemukan', null, 404);
+            if ($order['status'] !== 'delivered' || trim((string) ($order['delivery_note'] ?? '')) === '') json_error('Pesanan hanya bisa selesai setelah delivery note dikirim', null, 422);
+
+            $update = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+            $update->execute(['completed', $orderId]);
+            json_success('Pesanan berhasil ditandai selesai', ['order_id' => $orderId, 'status' => 'completed']);
+        }
+
         if (($_GET['action'] ?? '') !== 'verify_payment') json_error('Aksi tidak valid', null, 400);
 
         $body = json_body();
         $confirmationId = (int) ($body['confirmation_id'] ?? 0);
         $action = trim((string) ($body['action'] ?? ''));
         $adminNote = trim((string) ($body['admin_note'] ?? ''));
-        $validActions = ['accept', 'reject', 'request_retry'];
+        $validActions = ['accept', 'reject'];
 
         if ($confirmationId <= 0) json_error('confirmation_id wajib diisi', null, 422);
         if (!in_array($action, $validActions, true)) json_error('action tidak valid', null, 422);
-        if (in_array($action, ['reject', 'request_retry'], true) && $adminNote === '') json_error('Catatan admin wajib diisi', null, 422);
+        if ($action === 'reject' && $adminNote === '') json_error('Catatan admin wajib diisi', null, 422);
 
         $stmt = $pdo->prepare('SELECT pc.id, pc.order_id, pc.verification_status, o.status FROM payment_confirmations pc JOIN orders o ON o.id = pc.order_id WHERE pc.id = ? LIMIT 1');
         $stmt->execute([$confirmationId]);
@@ -112,7 +128,7 @@ switch ($method) {
         if (!$confirmation) json_error('Konfirmasi pembayaran tidak ditemukan', null, 404);
         if ($confirmation['verification_status'] !== 'pending') json_error('Konfirmasi ini sudah diverifikasi', null, 422);
 
-        $verificationStatus = $action === 'accept' ? 'accepted' : ($action === 'reject' ? 'rejected' : 'retry_requested');
+        $verificationStatus = $action === 'accept' ? 'accepted' : 'rejected';
         $orderStatus = $action === 'accept' ? 'paid' : 'pending_payment';
 
         $pdo->beginTransaction();
@@ -127,25 +143,23 @@ switch ($method) {
         break;
 
     // ----------------------------------------------------------------
-    // PUT — update status pesanan
+    // PUT — update delivery note pesanan
     // ----------------------------------------------------------------
     case 'PUT':
         if (!$id) json_error('ID pesanan diperlukan', null, 400);
 
-        $chk = $pdo->prepare('SELECT id FROM orders WHERE id = ?');
+        $chk = $pdo->prepare('SELECT id, status FROM orders WHERE id = ?');
         $chk->execute([$id]);
-        if (!$chk->fetch()) json_error('Pesanan tidak ditemukan', null, 404);
+        $order = $chk->fetch();
+        if (!$order) json_error('Pesanan tidak ditemukan', null, 404);
+        if (!in_array($order['status'], ['paid', 'processing', 'delivered', 'completed'], true)) json_error('Delivery note hanya bisa diisi setelah pembayaran diterima', null, 422);
 
         $body = json_body();
-        if (empty($body['status'])) json_error('status wajib diisi', null, 422);
-        $status = $legacyStatusMap[$body['status']] ?? $body['status'];
-        if (!in_array($status, $validStatuses, true)) {
-            json_error('status hanya boleh: ' . implode(', ', $validStatuses), null, 422);
-        }
         $deliveryNote = isset($body['delivery_note']) ? trim((string) $body['delivery_note']) : null;
 
-        $stmt = $pdo->prepare('UPDATE orders SET status = ?, delivery_note = ? WHERE id = ?');
-        $stmt->execute([$status, $deliveryNote, $id]);
+        $nextStatus = $deliveryNote !== '' ? 'delivered' : 'paid';
+        $stmt = $pdo->prepare('UPDATE orders SET delivery_note = ?, status = ? WHERE id = ?');
+        $stmt->execute([$deliveryNote !== '' ? $deliveryNote : null, $nextStatus, $id]);
 
         $updated = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
         $updated->execute([$id]);
@@ -153,7 +167,7 @@ switch ($method) {
         normalize_order_status($result);
         $result['total_amount'] = (int) $result['total_amount'];
 
-        json_success('Status pesanan berhasil diperbarui', $result);
+        json_success('Delivery note berhasil diperbarui', $result);
         break;
 
     default:

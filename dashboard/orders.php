@@ -33,24 +33,15 @@ renderHeader($pageTitle, $activePage);
     </div>
     <div class="overflow-y-auto p-5">
     <div class="grid gap-3 text-sm md:grid-cols-2" id="orderDetail"></div>
-    <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800">
-      <label class="font-bold">Ubah Status
-        <select class="select mt-1" id="orderStatusSelect">
-          <option value="pending_payment">Menunggu Pembayaran</option>
-          <option value="paid">Pembayaran Diterima</option>
-          <option value="processing">Diproses</option>
-          <option value="delivered">Dikirim</option>
-          <option value="completed">Selesai</option>
-          <option value="expired">Expired</option>
-          <option value="cancelled">Dibatalkan</option>
-        </select>
-      </label>
-      <label class="mt-4 block font-bold">Delivery Note
+    <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800 hidden" id="deliveryNoteSection">
+      <input id="orderId" type="hidden">
+      <label class="block font-bold">Delivery Note
         <textarea class="input mt-1 min-h-28" id="orderDeliveryNote" placeholder="Link, akun, atau catatan pengiriman."></textarea>
       </label>
       <div class="mt-3 flex justify-end gap-2">
         <button class="btn-soft" data-close-modal type="button">Tutup</button>
-        <button class="btn-primary" id="saveOrderStatus" type="button">Simpan</button>
+        <button class="btn-soft hidden" id="completeOrder" type="button">Tandai Selesai</button>
+        <button class="btn-primary" id="saveOrderStatus" type="button">Simpan Delivery Note</button>
       </div>
     </div>
     </div>

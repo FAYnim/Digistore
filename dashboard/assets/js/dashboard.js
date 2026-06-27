@@ -13,14 +13,14 @@ const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}
 const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 
 function statusLabel(s) {
-  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi', accepted: 'Diterima', rejected: 'Ditolak', retry_requested: 'Minta Ulang' };
+  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi', accepted: 'Diterima', rejected: 'Ditolak' };
   return map[s] ?? s;
 }
 
 function badgeClass(s) {
   if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible', 'accepted'].includes(s)) return 'badge-green';
   if (['pending', 'pending_payment', 'draft'].includes(s)) return 'badge-yellow';
-  if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected', 'retry_requested'].includes(s)) return 'badge-red';
+  if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected'].includes(s)) return 'badge-red';
   return 'badge-gray';
 }
 
@@ -542,16 +542,16 @@ window.showOrder = async (id) => {
               ${(c.verification_status || 'pending') === 'pending' ? `
                 <button class="btn-soft" onclick="verifyPayment(${c.id}, 'accept')" type="button">Terima</button>
                 <button class="btn-soft" onclick="verifyPayment(${c.id}, 'reject')" type="button">Tolak</button>
-                <button class="btn-soft" onclick="verifyPayment(${c.id}, 'request_retry')" type="button">Minta Ulang</button>
               ` : ''}
             </div>
           </div>`).join('')}
       </div>`;
   }
 
-  $('#orderStatusSelect').value = o.status;
-  $('#orderStatusSelect').dataset.id = o.id;
+  $('#orderId').value = o.id;
   $('#orderDeliveryNote').value = o.delivery_note || '';
+  $('#deliveryNoteSection')?.classList.toggle('hidden', !['paid', 'processing', 'delivered', 'completed'].includes(o.status));
+  $('#completeOrder')?.classList.toggle('hidden', !(o.status === 'delivered' && !!o.delivery_note));
   openModal('#orderModal');
 };
 
@@ -573,10 +573,18 @@ function initOrders() {
   $('#orderSearch')?.addEventListener('input', renderOrders);
 
   $('#saveOrderStatus')?.addEventListener('click', async () => {
-    const id = $('#orderStatusSelect').dataset.id;
-    const status = $('#orderStatusSelect').value;
+    const id = $('#orderId').value;
     const delivery_note = $('#orderDeliveryNote').value.trim();
-    const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { status, delivery_note });
+    const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { delivery_note });
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderOrders();
+  });
+
+  $('#completeOrder')?.addEventListener('click', async () => {
+    const id = $('#orderId').value;
+    const res = await api.post('/dashboard/api/orders.php?action=complete_order', { order_id: id });
     if (!res.success) { showToast(res.message, 'error'); return; }
     showToast(res.message);
     closeModals();

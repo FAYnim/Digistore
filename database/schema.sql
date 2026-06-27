@@ -130,7 +130,7 @@ CREATE TABLE payment_confirmations (
   paid_at        DATETIME NOT NULL,
   note           TEXT DEFAULT NULL,
   proof_path     VARCHAR(255) NOT NULL,
-  verification_status ENUM('pending', 'accepted', 'rejected', 'retry_requested') DEFAULT 'pending',
+  verification_status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
   admin_note     TEXT DEFAULT NULL,
   verified_by    INT DEFAULT NULL,
   verified_at    DATETIME DEFAULT NULL,
