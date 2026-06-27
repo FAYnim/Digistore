@@ -159,7 +159,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 3. Admin payment verification
 
-- **Status:** Sebagian
+- **Status:** Sudah
 - **Prioritas:** Critical
 - **Kompleksitas:** Medium
 - **Dependensi:** Payment confirmation internal

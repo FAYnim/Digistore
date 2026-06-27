@@ -45,7 +45,7 @@ switch ($method) {
             $order['items']        = $items->fetchAll();
             $order['total_amount'] = (int) $order['total_amount'];
 
-            $confirmations = $pdo->prepare('SELECT id, sender_name, payment_method, paid_at, note, proof_path, created_at FROM payment_confirmations WHERE order_id = ? ORDER BY created_at DESC');
+            $confirmations = $pdo->prepare('SELECT id, sender_name, payment_method, paid_at, note, proof_path, verification_status, admin_note, verified_by, verified_at, created_at FROM payment_confirmations WHERE order_id = ? ORDER BY created_at DESC');
             $confirmations->execute([$id]);
             $order['payment_confirmations'] = $confirmations->fetchAll();
 
@@ -74,7 +74,7 @@ switch ($method) {
         }
 
         $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        $stmt  = $pdo->prepare("SELECT o.*, COALESCE(oi.items_count, 0) AS items_count, oi.items_summary FROM orders o LEFT JOIN (SELECT order_id, COUNT(id) AS items_count, GROUP_CONCAT(product_name ORDER BY id SEPARATOR ', ') AS items_summary FROM order_items GROUP BY order_id) oi ON oi.order_id = o.id $where ORDER BY o.created_at DESC");
+        $stmt  = $pdo->prepare("SELECT o.*, COALESCE(oi.items_count, 0) AS items_count, oi.items_summary, COALESCE(pc.pending_confirmations, 0) AS pending_confirmations FROM orders o LEFT JOIN (SELECT order_id, COUNT(id) AS items_count, GROUP_CONCAT(product_name ORDER BY id SEPARATOR ', ') AS items_summary FROM order_items GROUP BY order_id) oi ON oi.order_id = o.id LEFT JOIN (SELECT order_id, COUNT(id) AS pending_confirmations FROM payment_confirmations WHERE verification_status = 'pending' GROUP BY order_id) pc ON pc.order_id = o.id $where ORDER BY o.created_at DESC");
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
@@ -82,11 +82,48 @@ switch ($method) {
             normalize_order_status($row);
             $row['total_amount'] = (int) $row['total_amount'];
             $row['items_count'] = (int) $row['items_count'];
+            $row['pending_confirmations'] = (int) $row['pending_confirmations'];
             $row['items_summary'] = $row['items_count'] > 1 ? $row['items_count'] . ' produk' : ($row['items_summary'] ?: '—');
         }
         unset($row);
 
         json_success('Pesanan berhasil dimuat', $rows);
+        break;
+
+    // ----------------------------------------------------------------
+    // POST — verifikasi pembayaran
+    // ----------------------------------------------------------------
+    case 'POST':
+        if (($_GET['action'] ?? '') !== 'verify_payment') json_error('Aksi tidak valid', null, 400);
+
+        $body = json_body();
+        $confirmationId = (int) ($body['confirmation_id'] ?? 0);
+        $action = trim((string) ($body['action'] ?? ''));
+        $adminNote = trim((string) ($body['admin_note'] ?? ''));
+        $validActions = ['accept', 'reject', 'request_retry'];
+
+        if ($confirmationId <= 0) json_error('confirmation_id wajib diisi', null, 422);
+        if (!in_array($action, $validActions, true)) json_error('action tidak valid', null, 422);
+        if (in_array($action, ['reject', 'request_retry'], true) && $adminNote === '') json_error('Catatan admin wajib diisi', null, 422);
+
+        $stmt = $pdo->prepare('SELECT pc.id, pc.order_id, pc.verification_status, o.status FROM payment_confirmations pc JOIN orders o ON o.id = pc.order_id WHERE pc.id = ? LIMIT 1');
+        $stmt->execute([$confirmationId]);
+        $confirmation = $stmt->fetch();
+        if (!$confirmation) json_error('Konfirmasi pembayaran tidak ditemukan', null, 404);
+        if ($confirmation['verification_status'] !== 'pending') json_error('Konfirmasi ini sudah diverifikasi', null, 422);
+
+        $verificationStatus = $action === 'accept' ? 'accepted' : ($action === 'reject' ? 'rejected' : 'retry_requested');
+        $orderStatus = $action === 'accept' ? 'paid' : 'pending_payment';
+
+        $pdo->beginTransaction();
+        $updateConfirmation = $pdo->prepare('UPDATE payment_confirmations SET verification_status = ?, admin_note = ?, verified_by = ?, verified_at = NOW() WHERE id = ?');
+        $updateConfirmation->execute([$verificationStatus, $adminNote !== '' ? $adminNote : null, $_SESSION['admin_id'] ?? null, $confirmationId]);
+
+        $updateOrder = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+        $updateOrder->execute([$orderStatus, (int) $confirmation['order_id']]);
+        $pdo->commit();
+
+        json_success('Verifikasi pembayaran berhasil diproses', ['order_id' => (int) $confirmation['order_id'], 'status' => $orderStatus]);
         break;
 
     // ----------------------------------------------------------------

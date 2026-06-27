@@ -13,14 +13,14 @@ const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}
 const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 
 function statusLabel(s) {
-  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi' };
+  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi', accepted: 'Diterima', rejected: 'Ditolak', retry_requested: 'Minta Ulang' };
   return map[s] ?? s;
 }
 
 function badgeClass(s) {
-  if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible'].includes(s)) return 'badge-green';
+  if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible', 'accepted'].includes(s)) return 'badge-green';
   if (['pending', 'pending_payment', 'draft'].includes(s)) return 'badge-yellow';
-  if (['out_of_stock', 'expired', 'cancelled', 'hidden'].includes(s)) return 'badge-red';
+  if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected', 'retry_requested'].includes(s)) return 'badge-red';
   return 'badge-gray';
 }
 
@@ -482,11 +482,12 @@ async function renderOrders() {
        <td>${o.customer_name}</td>
        <td>${o.items_summary || '—'}</td>
        <td class="font-bold">${rupiah(o.total_amount)}</td>
-       <td>${badge(o.status)}</td>
-       <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
-       <td><button class="btn-soft" onclick="showOrder(${o.id})">Detail</button></td>
-     </tr>`
-  ).join('') || '<tr><td colspan="7" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
+        <td>${badge(o.status)}</td>
+        <td>${o.pending_confirmations ? `<span class="badge badge-yellow">${o.pending_confirmations} menunggu</span>` : '<span class="text-slate-400">—</span>'}</td>
+        <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
+        <td><button class="btn-soft" onclick="showOrder(${o.id})">Detail</button></td>
+      </tr>`
+  ).join('') || '<tr><td colspan="8" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
 }
 
 window.showOrder = async (id) => {
@@ -534,7 +535,16 @@ window.showOrder = async (id) => {
             <div class="flex justify-between gap-4"><span class="font-bold">Metode</span><span>${escapeHtml(c.payment_method)}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Waktu Bayar</span><span>${escapeHtml(c.paid_at)}</span></div>
             <div class="flex justify-between gap-4"><span class="font-bold">Catatan</span><span>${escapeHtml(c.note || '—')}</span></div>
-            <a class="btn-soft w-fit" href="../${encodeURI(c.proof_path)}" target="_blank" rel="noopener">Lihat Bukti</a>
+            <div class="flex justify-between gap-4"><span class="font-bold">Status Verifikasi</span><span>${badge(c.verification_status || 'pending')}</span></div>
+            <div class="flex justify-between gap-4"><span class="font-bold">Catatan Admin</span><span>${escapeHtml(c.admin_note || '—')}</span></div>
+            <div class="flex flex-wrap gap-2">
+              <a class="btn-soft w-fit" href="../${encodeURI(c.proof_path)}" target="_blank" rel="noopener">Lihat Bukti</a>
+              ${(c.verification_status || 'pending') === 'pending' ? `
+                <button class="btn-soft" onclick="verifyPayment(${c.id}, 'accept')" type="button">Terima</button>
+                <button class="btn-soft" onclick="verifyPayment(${c.id}, 'reject')" type="button">Tolak</button>
+                <button class="btn-soft" onclick="verifyPayment(${c.id}, 'request_retry')" type="button">Minta Ulang</button>
+              ` : ''}
+            </div>
           </div>`).join('')}
       </div>`;
   }
@@ -543,6 +553,18 @@ window.showOrder = async (id) => {
   $('#orderStatusSelect').dataset.id = o.id;
   $('#orderDeliveryNote').value = o.delivery_note || '';
   openModal('#orderModal');
+};
+
+window.verifyPayment = async (confirmationId, action) => {
+  const needsNote = action !== 'accept';
+  const admin_note = needsNote ? prompt('Catatan admin untuk customer/internal:') : '';
+  if (needsNote && !admin_note?.trim()) return;
+  const res = await api.post('/dashboard/api/orders.php?action=verify_payment', { confirmation_id: confirmationId, action, admin_note: admin_note?.trim() || null });
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  showToast(res.message);
+  closeModals();
+  renderOrders();
+  if (res.data?.order_id) showOrder(res.data.order_id);
 };
 
 function initOrders() {

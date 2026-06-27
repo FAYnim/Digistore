@@ -21,7 +21,7 @@ renderHeader($pageTitle, $activePage);
       </select>
     </div>
   </div>
-  <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Customer</th><th>Produk</th><th>Total</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="ordersTable"></tbody></table></div>
+  <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Customer</th><th>Produk</th><th>Total</th><th>Status</th><th>Verifikasi</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="ordersTable"></tbody></table></div>
 </section>
 
 <!-- Modal Detail Order -->
