@@ -29,12 +29,6 @@ function validate_product_payload(array $body, bool $partial = false): array
         if ($name === '') $errors[] = $partial ? 'name tidak boleh kosong' : 'name wajib diisi';
         if (strlen($name) > 150) $errors[] = 'name maksimal 150 karakter';
     }
-    if (!$partial || array_key_exists('slug', $body)) {
-        $slug = trim((string) ($body['slug'] ?? ''));
-        if ($slug === '') $errors[] = $partial ? 'slug tidak boleh kosong' : 'slug wajib diisi';
-        if ($slug !== '' && !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug)) $errors[] = 'slug tidak valid';
-        if (strlen($slug) > 180) $errors[] = 'slug maksimal 180 karakter';
-    }
     if (!$partial || array_key_exists('price', $body)) {
         if (!isset($body['price']) || !is_numeric($body['price']) || (int) $body['price'] < 0) $errors[] = 'price wajib angka positif';
     }
@@ -80,6 +74,17 @@ function product_category_id_from_payload(PDO $pdo, array $body): int
     if (!$catChk->fetch()) json_error('category_id tidak valid', null, 422);
 
     return $catId;
+}
+
+function generate_product_slug(PDO $pdo): string
+{
+    do {
+        $slug = 'prd-' . bin2hex(random_bytes(8));
+        $chk = $pdo->prepare('SELECT id FROM products WHERE slug = ? LIMIT 1');
+        $chk->execute([$slug]);
+    } while ($chk->fetch());
+
+    return $slug;
 }
 
 switch ($method) {
@@ -158,11 +163,7 @@ switch ($method) {
         $errors = validate_product_payload($body);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
-        // Cek slug unik
-        $chk = $pdo->prepare('SELECT id FROM products WHERE slug = ?');
-        $chk->execute([$body['slug']]);
-        if ($chk->fetch()) json_error('Slug sudah digunakan', null, 409);
-
+        $slug = generate_product_slug($pdo);
         $catId = product_category_id_from_payload($pdo, $body);
 
         $stmt = $pdo->prepare(
@@ -173,7 +174,7 @@ switch ($method) {
         $stmt->execute([
             $catId,
             trim($body['name']),
-            trim($body['slug']),
+            $slug,
             $body['description']    ?? null,
             (int)   $body['price'],
             isset($body['original_price']) ? (int) $body['original_price'] : null,
@@ -210,13 +211,6 @@ switch ($method) {
         $errors = validate_product_payload($body, true);
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
-        // Cek slug unik (kecuali milik sendiri)
-        if (!empty($body['slug'])) {
-            $slugChk = $pdo->prepare('SELECT id FROM products WHERE slug = ? AND id != ?');
-            $slugChk->execute([$body['slug'], $id]);
-            if ($slugChk->fetch()) json_error('Slug sudah digunakan', null, 409);
-        }
-
         $catId = array_key_exists('category_id', $body)
             ? product_category_id_from_payload($pdo, $body)
             : default_product_category_id($pdo);
@@ -230,7 +224,7 @@ switch ($method) {
         $stmt->execute([
             $catId,
             isset($body['name'])           ? trim($body['name'])           : $current['name'],
-            isset($body['slug'])           ? trim($body['slug'])           : $current['slug'],
+            $current['slug'],
             array_key_exists('description', $body) ? $body['description'] : $current['description'],
             isset($body['price'])          ? (int) $body['price']          : (int) $current['price'],
             array_key_exists('original_price', $body)

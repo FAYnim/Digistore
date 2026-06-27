@@ -266,7 +266,6 @@ window.editProduct = async (id) => {
   $('#productModalTitle').textContent = 'Edit Produk';
   $('#productId').value              = p.id;
   $('#productName').value            = p.name;
-  $('#productSlug').value            = p.slug;
   $('#productPrice').value           = p.price;
   $('#productOriginalPrice').value   = p.original_price || '';
   $('#productStock').value           = p.stock;
@@ -290,18 +289,11 @@ function initProducts() {
   $('#productSearch')?.addEventListener('input', renderProducts);
   $('#addProductBtn')?.addEventListener('click', () => { resetProductForm(); openModal('#productModal'); });
 
-  $('#productName')?.addEventListener('input', () => {
-    if (!$('#productId').value) {
-      $('#productSlug').value = slugify($('#productName').value);
-    }
-  });
-
   $('#productForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = $('#productId').value;
     const payload = {
       name:           $('#productName').value,
-      slug:           $('#productSlug').value,
       description:    $('#productDescription').value,
       price:          parseInt($('#productPrice').value),
       original_price: $('#productOriginalPrice').value ? parseInt($('#productOriginalPrice').value) : null,
