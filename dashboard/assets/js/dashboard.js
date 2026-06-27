@@ -217,41 +217,15 @@ async function renderOverview() {
 /* ----------------------------------------------------------------
  * Products (products.php)
  * --------------------------------------------------------------- */
-let _categories = []; // cache kategori untuk dropdown
-
-async function loadCategoryOptions() {
-  if (_categories.length) return;
-  const res = await api.get('/dashboard/api/categories.php');
-  if (res.success) _categories = res.data;
-}
-
 async function renderProducts() {
-  await loadCategoryOptions();
-
-  const keyword    = ($('#productSearch')?.value || '').trim();
-  const categoryId = $('#productCategoryFilter')?.value || '';
-  const params     = new URLSearchParams();
-  if (keyword)    params.set('search', keyword);
-  if (categoryId) params.set('category_id', categoryId);
+  const keyword = ($('#productSearch')?.value || '').trim();
+  const params  = new URLSearchParams();
+  if (keyword) params.set('search', keyword);
 
   const res = await api.get(`/dashboard/api/products.php?${params}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
 
   const products = res.data;
-
-  // Fill category dropdown filter
-  const filterEl = $('#productCategoryFilter');
-  if (filterEl && filterEl.options.length <= 1) {
-    filterEl.innerHTML = `<option value="">Semua kategori</option>` +
-      _categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-  }
-
-  // Fill form category dropdown
-  const formCat = $('#productCategory');
-  if (formCat && formCat.options.length === 0) {
-    formCat.innerHTML = `<option value="">-- Pilih Kategori --</option>` +
-      _categories.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-  }
 
   $('#productsTable').innerHTML = products.map((p) =>
     `<tr>
@@ -264,7 +238,6 @@ async function renderProducts() {
            </div>
          </div>
        </td>
-       <td>${p.category_name || '—'}</td>
        <td class="font-bold">${rupiah(p.price)}</td>
        <td>${p.stock}</td>
        <td>${badge(p.status)}</td>
@@ -290,7 +263,6 @@ window.editProduct = async (id) => {
   const res = await api.get(`/dashboard/api/products.php?id=${id}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   const p = res.data;
-  await loadCategoryOptions();
 
   $('#productModalTitle').textContent = 'Edit Produk';
   $('#productId').value              = p.id;
@@ -305,11 +277,6 @@ window.editProduct = async (id) => {
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
 
-  const formCat = $('#productCategory');
-  if (formCat) {
-    formCat.innerHTML = `<option value="">-- Pilih Kategori --</option>` +
-      _categories.map((c) => `<option value="${c.id}" ${c.id == p.category_id ? 'selected' : ''}>${c.name}</option>`).join('');
-  }
   openModal('#productModal');
 };
 
@@ -323,10 +290,8 @@ window.askDeleteProduct = (id, name) => {
 function initProducts() {
   renderProducts();
   $('#productSearch')?.addEventListener('input', renderProducts);
-  $('#productCategoryFilter')?.addEventListener('change', renderProducts);
   $('#addProductBtn')?.addEventListener('click', () => { resetProductForm(); openModal('#productModal'); });
 
-  // Auto-slug dari nama
   $('#productName')?.addEventListener('input', () => {
     if (!$('#productId').value) {
       $('#productSlug').value = slugify($('#productName').value);
@@ -337,7 +302,6 @@ function initProducts() {
     e.preventDefault();
     const id = $('#productId').value;
     const payload = {
-      category_id:    $('#productCategory').value ? parseInt($('#productCategory').value) : null,
       name:           $('#productName').value,
       slug:           $('#productSlug').value,
       description:    $('#productDescription').value,
@@ -448,7 +412,6 @@ function initCategories() {
     showToast(res.message);
     closeModals();
     renderCategories();
-    _categories = []; // reset cache
   });
 
   $('#confirmDeleteCategory')?.addEventListener('click', async () => {
@@ -458,7 +421,6 @@ function initCategories() {
     showToast(res.message);
     closeModals();
     renderCategories();
-    _categories = [];
     _deleteCategoryId = null;
   });
 }
