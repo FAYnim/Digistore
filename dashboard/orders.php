@@ -7,10 +7,8 @@ renderHeader($pageTitle, $activePage);
 <section class="space-y-5" data-page="orders">
   <div><h2 class="text-2xl font-black">Pesanan</h2><p class="text-sm text-slate-500 dark:text-slate-400">Kelola dan pantau status pesanan.</p></div>
   <div class="card p-4">
-    <div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm" id="orderQueueStats"></div>
     <div class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800 -mx-4 px-4" id="orderTabs">
       <button class="tab-btn active" data-tab="pending_confirm"><span class="tab-label">Perlu Verifikasi</span> <span class="tab-count" id="tabCount-pending_confirm">0</span></button>
-      <button class="tab-btn" data-tab="pending_payment"><span class="tab-label">Menunggu Bayar</span> <span class="tab-count" id="tabCount-pending_payment">0</span></button>
       <button class="tab-btn" data-tab="paid"><span class="tab-label">Perlu Dikirim</span> <span class="tab-count" id="tabCount-paid">0</span></button>
       <button class="tab-btn" data-tab="processing"><span class="tab-label">Diproses</span> <span class="tab-count" id="tabCount-processing">0</span></button>
       <button class="tab-btn" data-tab="delivered"><span class="tab-label">Dikirim</span> <span class="tab-count" id="tabCount-delivered">0</span></button>
@@ -23,7 +21,7 @@ renderHeader($pageTitle, $activePage);
   </div>
   <div class="rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
     <p class="font-bold">Tips kerja</p>
-    <p class="mt-1">Tab <span class="font-semibold">Perlu Verifikasi</span> menampilkan order dengan bukti bayar yang belum diproses. Tab <span class="font-semibold">Perlu Dikirim</span> menampilkan order yang sudah dibayar dan siap dikirim.</p>
+    <p class="mt-1">Tab <span class="font-semibold">Perlu Verifikasi</span> menampilkan order menunggu bayar atau bukti bayar yang belum diproses. Tab <span class="font-semibold">Perlu Dikirim</span> menampilkan order yang sudah dibayar dan siap dikirim.</p>
   </div>
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">

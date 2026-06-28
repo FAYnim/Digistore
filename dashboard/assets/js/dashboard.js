@@ -579,23 +579,6 @@ function isOrderUrgent(createdAt, status) {
   return false;
 }
 
-function renderOrderQueueStats() {
-  const stats = [
-    { key: 'pending_confirm', label: 'Perlu Verifikasi', color: 'bg-amber-500' },
-    { key: 'pending_payment', label: 'Menunggu Bayar', color: 'bg-yellow-500' },
-    { key: 'paid', label: 'Perlu Dikirim', color: 'bg-blue-500' },
-    { key: 'processing', label: 'Diproses', color: 'bg-indigo-500' },
-    { key: 'delivered', label: 'Dikirim', color: 'bg-teal-500' },
-  ];
-  $('#orderQueueStats').innerHTML = stats.map(s => `
-    <div class="queue-stat">
-      <span class="queue-stat-dot ${s.color}"></span>
-      <span class="queue-stat-label">${s.label}</span>
-      <span class="queue-stat-value" id="queueCount-${s.key}">${orderQueueCounts[s.key] || 0}</span>
-    </div>
-  `).join('');
-}
-
 function updateTabCounts(data) {
   const counts = {};
   data.forEach(o => {
@@ -606,28 +589,16 @@ function updateTabCounts(data) {
   counts.pending_confirm = (counts.pending_confirm || 0) + (counts.pending_payment || 0);
   orderQueueCounts = counts;
 
-  const tabs = ['pending_confirm', 'pending_payment', 'paid', 'processing', 'delivered', 'completed', 'all'];
+  const tabs = ['pending_confirm', 'paid', 'processing', 'delivered', 'completed', 'all'];
   tabs.forEach(tab => {
     const el = $(`#tabCount-${tab}`);
     if (el) el.textContent = counts[tab] || 0;
   });
-
-  renderOrderQueueStats();
 }
 
 function renderOrders() {
   const search = ($('#orderSearch')?.value.trim() || '');
   const params = new URLSearchParams();
-
-  if (activeOrderTab !== 'all') {
-    if (activeOrderTab === 'pending_confirm') {
-      params.set('has_pending_confirmation', '1');
-    } else if (activeOrderTab === 'pending_payment') {
-      params.set('status', 'pending_payment');
-    } else {
-      params.set('status', activeOrderTab);
-    }
-  }
   if (search) params.set('search', search);
 
   api.get(`/dashboard/api/orders.php?${params}`).then(res => {
@@ -635,7 +606,16 @@ function renderOrders() {
 
     updateTabCounts(res.data);
 
-    $('#ordersTable').innerHTML = res.data.map(o => {
+    const orders = activeOrderTab === 'all'
+      ? res.data
+      : res.data.filter(o => {
+        const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
+        return activeOrderTab === 'pending_confirm'
+          ? ['pending_confirm', 'pending_payment'].includes(queue)
+          : queue === activeOrderTab;
+      });
+
+    $('#ordersTable').innerHTML = orders.map(o => {
       const urgent = isOrderUrgent(o.created_at, o.status);
       const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
       const isActionable = ['pending_confirm', 'paid'].includes(queue);
@@ -763,7 +743,6 @@ window.verifyPayment = async (confirmationId, action) => {
 };
 
 function initOrders() {
-  renderOrderQueueStats();
   renderOrders();
 
   $('#orderTabs')?.addEventListener('click', (e) => {
