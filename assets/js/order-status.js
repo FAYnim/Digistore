@@ -57,7 +57,7 @@ function hideMessage() {
 
 function renderEmpty() {
   document.querySelector("#statusResult").innerHTML = `
-    <div class="modal-card mx-auto max-w-3xl text-center">
+    <div class="modal-card mx-auto w-full max-w-3xl text-center">
       <h2 class="font-display text-2xl font-extrabold">Cek Status Pesanan</h2>
       <p class="mt-3 text-sm text-[var(--muted)]">Masukkan kode order untuk cek pesanan.</p>
     </div>
@@ -66,7 +66,7 @@ function renderEmpty() {
 
 function renderLoading() {
   document.querySelector("#statusResult").innerHTML = `
-    <div class="modal-card mx-auto max-w-3xl text-center">
+    <div class="modal-card mx-auto w-full max-w-3xl text-center">
       <h2 class="font-display text-2xl font-extrabold">Memuat pesanan...</h2>
     </div>
   `;
@@ -75,7 +75,7 @@ function renderLoading() {
 function renderError(message) {
   showMessage(message || "Order tidak ditemukan.");
   document.querySelector("#statusResult").innerHTML = `
-    <div class="modal-card mx-auto max-w-3xl text-center">
+    <div class="modal-card mx-auto w-full max-w-3xl text-center">
       <h2 class="font-display text-2xl font-extrabold">Order tidak ditemukan.</h2>
       <p class="mt-3 text-sm text-[var(--muted)]">Periksa kembali kode order kamu.</p>
     </div>
@@ -141,7 +141,7 @@ function renderDeliveryNote(order) {
   if (order.status !== "completed") return "";
   const note = order.delivery_note ? escapeText(order.delivery_note) : "Pesanan selesai. Hubungi admin jika credentials belum tampil.";
   return `
-    <section class="modal-card lg:col-span-2">
+    <section class="modal-card w-full max-w-none lg:col-span-2">
       <h3 class="font-display text-xl font-extrabold">Delivery Note</h3>
       <p class="mt-3 whitespace-pre-line text-sm text-[var(--muted)]">${note}</p>
     </section>
@@ -160,7 +160,7 @@ function renderOrder(order) {
     : "";
   document.querySelector("#statusResult").innerHTML = `
     <div class="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.4fr_.9fr]">
-      <section class="modal-card">
+      <section class="modal-card w-full max-w-none">
         <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
         ${deadlineSection}
         <div class="mt-5 grid gap-3 text-sm text-[var(--muted)]">
@@ -173,19 +173,19 @@ function renderOrder(order) {
         </div>
       </section>
 
-      <aside class="modal-card">
+      <aside class="modal-card w-full max-w-none">
         <span class="inline-flex rounded-full px-3 py-1 text-xs font-extrabold ${statusClass}">${escapeText(statusLabels[order.status] || order.status)}</span>
         <h3 class="mt-4 font-display text-xl font-extrabold">Status & Aksi</h3>
         <p class="mt-3 text-sm text-[var(--muted)]">${escapeText(getStatusInstruction(order))}</p>
         <div class="mt-6 grid gap-3">${renderActions(order)}</div>
       </aside>
 
-      <section class="modal-card">
+      <section class="modal-card w-full max-w-none">
         <h3 class="font-display text-xl font-extrabold">Item Pesanan</h3>
         <div class="mt-5 grid gap-3">${renderItems(order.items || [])}</div>
       </section>
 
-      <section class="modal-card">
+      <section class="modal-card w-full max-w-none">
         <h3 class="font-display text-xl font-extrabold">Ringkasan Pembayaran</h3>
         <div class="mt-5 grid gap-3 text-sm text-[var(--muted)]">
           <p><b>Metode:</b> ${escapeText(order.payment_method || "-")}</p>
