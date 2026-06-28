@@ -19,8 +19,9 @@ const categories = [
   { id: "produktivitas", name: "Produktivitas", icon: "fa-solid fa-bolt" }
 ];
 
-const testimonials = [
-  { id: 1, name: "Raka Pratama", role: "Mahasiswa", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 5 },
-  { id: 2, name: "Nadia Putri", role: "Freelancer", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 5 },
-  { id: 3, name: "Dimas Arya", role: "Content Creator", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 4 }
-];
+// Testimoni disembunyikan sementara
+// const testimonials = [
+//   { id: 1, name: "Raka Pratama", role: "Mahasiswa", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 5 },
+//   { id: 2, name: "Nadia Putri", role: "Freelancer", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 5 },
+//   { id: 3, name: "Dimas Arya", role: "Content Creator", message: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.", rating: 4 }
+// ];

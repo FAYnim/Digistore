@@ -29,7 +29,8 @@ $processingProducts = scalar_int($pdo, 'SELECT COUNT(DISTINCT oi.product_id) FRO
 $todayIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = CURDATE() AND status = "completed"');
 $todayOrders = scalar_int($pdo, 'SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()');
 $totalIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status = "completed"');
-$averageRating = scalar_float($pdo, 'SELECT COALESCE(AVG(rating), 0) FROM testimonials WHERE status = "visible"');
+// $averageRating = scalar_float($pdo, 'SELECT COALESCE(AVG(rating), 0) FROM testimonials WHERE status = "visible"'); // disembunyikan sementara
+$averageRating = 0;
 
 $recentStmt = $pdo->query('SELECT o.id, o.order_code, o.customer_name, o.total_amount, o.status, COALESCE(GROUP_CONCAT(oi.product_name ORDER BY oi.id SEPARATOR ", "), "—") AS products FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.id GROUP BY o.id ORDER BY o.created_at DESC LIMIT 5');
 $recentOrders = $recentStmt->fetchAll();

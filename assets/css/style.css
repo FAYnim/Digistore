@@ -37,7 +37,7 @@ body { font-family: "Plus Jakarta Sans", sans-serif; min-height: 100vh; backgrou
 
 .icon-btn i, .cart-btn i { font-size: 16px; }
 .product-meta i { font-size: 12px; }
-.testimonial-card i { font-size: 14px; }
+/* .testimonial-card i { font-size: 14px; } */ /* disembunyikan sementara */
 
 .brand-pill, .nav-shell, .mobile-menu { border: 1px solid rgba(255, 255, 255, .72); background: rgba(255, 255, 255, .82); box-shadow: 0 18px 50px rgba(15, 23, 42, .08); backdrop-filter: blur(18px); }
 .brand-pill { display: inline-flex; min-height: 68px; align-items: center; gap: 14px; border-radius: 999px; padding: 0 28px; font-family: "Sora", sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -.04em; color: var(--text); }
@@ -114,9 +114,9 @@ body { font-family: "Plus Jakarta Sans", sans-serif; min-height: 100vh; backgrou
 .status.low { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
 .status.out { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 
-.benefit-card, .testimonial-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px; }
-.benefit-card b, .testimonial-card b { font-family: "Sora", sans-serif; font-size: 18px; }
-.benefit-card p, .testimonial-card p { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.benefit-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 20px; }
+.benefit-card b { font-family: "Sora", sans-serif; font-size: 18px; }
+.benefit-card p { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.8; }
 .cta-card { position: relative; overflow: hidden; border-radius: 16px; background: var(--ink); padding: clamp(28px, 6vw, 56px); color: var(--bg); }
 .cta-card::after { display: none; }
 .cta-card h2 { position: relative; max-width: 760px; font-family: "Sora", sans-serif; font-size: clamp(2.1rem, 6vw, 4rem); font-weight: 900; line-height: 1; letter-spacing: -.06em; }
