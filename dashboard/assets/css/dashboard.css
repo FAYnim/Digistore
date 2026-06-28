@@ -176,3 +176,61 @@ td { border-top: 1px solid rgb(226 232 240); padding: .7rem .85rem; font-size: .
 
 .modal { display: none; }
 .modal.open { display: grid; }
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .625rem .875rem;
+  font-size: .8rem;
+  font-weight: 700;
+  color: rgb(100 116 139);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  background: none;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: rgb(37 99 235); }
+.tab-btn.active { color: rgb(37 99 235); border-bottom-color: rgb(37 99 235); }
+.dark .tab-btn { color: rgb(148 163 184); }
+.dark .tab-btn:hover { color: rgb(59 130 246); }
+.dark .tab-btn.active { color: rgb(59 130 246); border-bottom-color: rgb(59 130 246); }
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 .35rem;
+  border-radius: 999px;
+  background: rgb(226 232 240);
+  color: rgb(71 85 105);
+  font-size: .65rem;
+  font-weight: 800;
+}
+.tab-btn.active .tab-count { background: rgb(37 99 235); color: white; }
+.dark .tab-count { background: rgb(30 41 59); color: rgb(148 163 184); }
+.dark .tab-btn.active .tab-count { background: rgb(59 130 246); color: white; }
+
+.order-row-urgent { background: rgb(254 249 195 / .5) !important; }
+.dark .order-row-urgent { background: rgb(113 63 18 / .25) !important; }
+.order-row-actionable td { background: rgb(248 250 252); }
+.dark .order-row-actionable td { background: rgb(30 41 59 / .35); }
+
+.queue-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .375rem .625rem;
+  border-radius: .5rem;
+  font-size: .75rem;
+  font-weight: 700;
+  background: rgb(241 245 249);
+  color: rgb(71 85 105);
+}
+.dark .queue-stat { background: rgb(30 41 59); color: rgb(148 163 184); }
+.queue-stat-dot { width: 8px; height: 8px; border-radius: 999px; }
+.queue-stat-value { font-weight: 800; color: rgb(15 23 42); }
+.dark .queue-stat-value { color: rgb(248 250 252); }

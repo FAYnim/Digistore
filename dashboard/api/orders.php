@@ -67,6 +67,9 @@ switch ($method) {
                 if ($filterStatus === 'pending_payment') $params[] = 'pending';
             }
         }
+        if (!empty($_GET['has_pending_confirmation'])) {
+            $conditions[] = 'pc.pending_confirmations > 0';
+        }
         if (!empty($_GET['search'])) {
             $conditions[] = '(o.order_code LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ? OR o.customer_phone LIKE ?)';
             $keyword      = '%' . $_GET['search'] . '%';

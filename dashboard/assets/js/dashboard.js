@@ -243,7 +243,7 @@ async function renderProducts() {
        <td>
          <div class="flex gap-2">
            <button class="btn-soft" onclick="editProduct(${p.id})">Edit</button>
-           <button class="btn-soft" onclick="askDeleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Hapus</button>
+            <button class="btn-soft" onclick="askDeleteProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')">Arsipkan</button>
          </div>
        </td>
      </tr>`
@@ -551,29 +551,140 @@ function initCategories() {
 /* ----------------------------------------------------------------
  * Orders (orders.php)
  * --------------------------------------------------------------- */
-async function renderOrders() {
-  const statusFilter = $('#orderStatusFilter')?.value || '';
-  const search       = $('#orderSearch')?.value.trim() || '';
-  const params       = new URLSearchParams();
-  if (statusFilter) params.set('status', statusFilter);
-  if (search)       params.set('search', search);
+let activeOrderTab = 'pending_confirm';
+let orderQueueCounts = {};
 
-  const res = await api.get(`/dashboard/api/orders.php?${params}`);
-  if (!res.success) { showToast(res.message, 'error'); return; }
-
-  $('#ordersTable').innerHTML = res.data.map((o) =>
-    `<tr>
-       <td class="font-black">${o.order_code}</td>
-       <td>${o.customer_name}</td>
-       <td>${o.items_summary || '—'}</td>
-       <td class="font-bold">${rupiah(o.total_amount)}</td>
-        <td>${badge(o.status)}</td>
-        <td>${o.pending_confirmations ? `<span class="badge badge-yellow">${o.pending_confirmations} menunggu</span>` : '<span class="text-slate-400">—</span>'}</td>
-        <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
-        <td><button class="btn-soft" onclick="showOrder(${o.id})">Detail</button></td>
-      </tr>`
-  ).join('') || '<tr><td colspan="8" class="text-center text-slate-400">Tidak ada pesanan.</td></tr>';
+function getQueueFromStatus(status, pendingConfirmations) {
+  if (pendingConfirmations > 0) return 'pending_confirm';
+  const map = {
+    pending_payment: 'pending_payment',
+    pending: 'pending_payment',
+    paid: 'paid',
+    processing: 'processing',
+    delivered: 'delivered',
+    completed: 'completed',
+    expired: 'expired',
+    cancelled: 'cancelled',
+  };
+  return map[status] || 'pending_payment';
 }
+
+function isOrderUrgent(createdAt, status) {
+  if (['pending_payment', 'pending', 'pending_confirm'].includes(status)) {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const hours = (now - created) / (1000 * 60 * 60);
+    return hours > 24;
+  }
+  return false;
+}
+
+function renderOrderQueueStats() {
+  const stats = [
+    { key: 'pending_confirm', label: 'Perlu Verifikasi', color: 'bg-amber-500' },
+    { key: 'pending_payment', label: 'Menunggu Bayar', color: 'bg-yellow-500' },
+    { key: 'paid', label: 'Perlu Dikirim', color: 'bg-blue-500' },
+    { key: 'processing', label: 'Diproses', color: 'bg-indigo-500' },
+    { key: 'delivered', label: 'Dikirim', color: 'bg-teal-500' },
+  ];
+  $('#orderQueueStats').innerHTML = stats.map(s => `
+    <div class="queue-stat">
+      <span class="queue-stat-dot ${s.color}"></span>
+      <span class="queue-stat-label">${s.label}</span>
+      <span class="queue-stat-value" id="queueCount-${s.key}">${orderQueueCounts[s.key] || 0}</span>
+    </div>
+  `).join('');
+}
+
+function updateTabCounts(data) {
+  const counts = {};
+  data.forEach(o => {
+    const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
+    counts[queue] = (counts[queue] || 0) + 1;
+  });
+  counts.all = data.length;
+  counts.pending_confirm = (counts.pending_confirm || 0) + (counts.pending_payment || 0);
+  orderQueueCounts = counts;
+
+  const tabs = ['pending_confirm', 'pending_payment', 'paid', 'processing', 'delivered', 'completed', 'all'];
+  tabs.forEach(tab => {
+    const el = $(`#tabCount-${tab}`);
+    if (el) el.textContent = counts[tab] || 0;
+  });
+
+  renderOrderQueueStats();
+}
+
+function renderOrders() {
+  const search = ($('#orderSearch')?.value.trim() || '');
+  const params = new URLSearchParams();
+
+  if (activeOrderTab !== 'all') {
+    if (activeOrderTab === 'pending_confirm') {
+      params.set('has_pending_confirmation', '1');
+    } else if (activeOrderTab === 'pending_payment') {
+      params.set('status', 'pending_payment');
+    } else {
+      params.set('status', activeOrderTab);
+    }
+  }
+  if (search) params.set('search', search);
+
+  api.get(`/dashboard/api/orders.php?${params}`).then(res => {
+    if (!res.success) { showToast(res.message, 'error'); return; }
+
+    updateTabCounts(res.data);
+
+    $('#ordersTable').innerHTML = res.data.map(o => {
+      const urgent = isOrderUrgent(o.created_at, o.status);
+      const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
+      const isActionable = ['pending_confirm', 'paid'].includes(queue);
+      const rowClass = urgent ? 'order-row-urgent' : (isActionable ? 'order-row-actionable' : '');
+
+      let actions = `<button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>`;
+
+      if (o.pending_confirmations > 0) {
+        actions = `
+          <button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>
+          <button class="btn-primary text-xs py-1 px-2" onclick="showOrderAndVerify(${o.id})">Verifikasi</button>
+        `;
+      } else if (o.status === 'paid') {
+        actions = `
+          <button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>
+          <button class="btn-primary text-xs py-1 px-2" onclick="quickDeliver(${o.id})">Kirim</button>
+        `;
+      }
+
+      return `<tr class="${rowClass}">
+        <td class="font-black">${o.order_code}</td>
+        <td>
+          <div>${o.customer_name}</div>
+          ${o.customer_phone ? `<div class="text-xs text-slate-500 dark:text-slate-400">${o.customer_phone}</div>` : ''}
+        </td>
+        <td>${o.items_summary || '—'}</td>
+        <td class="font-bold">${rupiah(o.total_amount)}</td>
+        <td>${badge(o.status)}</td>
+        <td>${o.pending_confirmations ? `<span class="badge badge-yellow">${o.pending_confirmations} konfirmasi</span>` : '<span class="text-slate-400">—</span>'}</td>
+        <td class="text-sm text-slate-500">${o.created_at?.slice(0, 10) || ''}</td>
+        <td class="text-nowrap">${actions}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="8" class="text-center text-slate-400 py-8">Tidak ada pesanan di queue ini.</td></tr>';
+  });
+}
+
+window.showOrderAndVerify = async (id) => {
+  await showOrder(id);
+};
+
+window.quickDeliver = async (id) => {
+  const note = prompt('Masukkan delivery note (link/akun):');
+  if (note === null) return;
+
+  const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { delivery_note: note });
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  showToast('Pesanan berhasil dikirim');
+  renderOrders();
+};
 
 window.showOrder = async (id) => {
   const res = await api.get(`/dashboard/api/orders.php?id=${id}`);
@@ -652,9 +763,23 @@ window.verifyPayment = async (confirmationId, action) => {
 };
 
 function initOrders() {
+  renderOrderQueueStats();
   renderOrders();
-  $('#orderStatusFilter')?.addEventListener('change', renderOrders);
-  $('#orderSearch')?.addEventListener('input', renderOrders);
+
+  $('#orderTabs')?.addEventListener('click', (e) => {
+    const tab = e.target.closest('.tab-btn');
+    if (!tab) return;
+    $$('.tab-btn').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeOrderTab = tab.dataset.tab;
+    renderOrders();
+  });
+
+  let searchTimeout;
+  $('#orderSearch')?.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(renderOrders, 300);
+  });
 
   $('#saveOrderStatus')?.addEventListener('click', async () => {
     const id = $('#orderId').value;

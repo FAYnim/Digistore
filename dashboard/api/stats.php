@@ -1,143 +1,91 @@
 <?php
-/**
- * API: Stats
- * GET /dashboard/api/stats.php   — statistik ringkasan untuk overview dashboard
- */
 
 require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../../includes/order-expiration.php';
 
-if (strtoupper($_SERVER['REQUEST_METHOD']) !== 'GET') {
-    json_error('Method tidak diizinkan', null, 405);
+require_method('GET');
+
+expire_pending_orders($pdo);
+
+function scalar_int(PDO $pdo, string $sql, array $params = []): int
+{
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return (int) $stmt->fetchColumn();
 }
 
-// Total, tersedia, dan habis produk
-$p = $pdo->query('SELECT COUNT(*) AS total, SUM(status = "active" AND stock > 0) AS available, SUM(stock <= 0) AS out_of_stock FROM products');
-$products = $p->fetch();
+function scalar_float(PDO $pdo, string $sql, array $params = []): float
+{
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return (float) $stmt->fetchColumn();
+}
 
-// Total & hari ini pesanan
-$today = date('Y-m-d');
-$o     = $pdo->prepare(
-    'SELECT COUNT(*) AS total, SUM(DATE(created_at) = ?) AS today_count FROM orders'
-);
-$o->execute([$today]);
-$orders = $o->fetch();
+$totalProducts = scalar_int($pdo, 'SELECT COUNT(*) FROM products WHERE archived_at IS NULL');
+$availableProducts = scalar_int($pdo, 'SELECT COUNT(*) FROM products p WHERE p.archived_at IS NULL AND p.status = "active" AND EXISTS (SELECT 1 FROM product_accounts pa WHERE pa.product_id = p.id AND pa.status = "available")');
+$outOfStockProducts = scalar_int($pdo, 'SELECT COUNT(*) FROM products p WHERE p.archived_at IS NULL AND (p.status = "out_of_stock" OR NOT EXISTS (SELECT 1 FROM product_accounts pa WHERE pa.product_id = p.id AND pa.status = "available"))');
+$processingProducts = scalar_int($pdo, 'SELECT COUNT(DISTINCT oi.product_id) FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.status IN ("paid", "processing") AND oi.product_id IS NOT NULL');
+$todayIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = CURDATE() AND status IN ("paid", "processing", "delivered", "completed")');
+$todayOrders = scalar_int($pdo, 'SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()');
+$totalIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status IN ("paid", "processing", "delivered", "completed")');
+$averageRating = scalar_float($pdo, 'SELECT COALESCE(AVG(rating), 0) FROM testimonials WHERE status = "visible"');
 
-// Penghasilan dari pesanan dibayar/selesai
-$i = $pdo->prepare(
-    'SELECT COALESCE(SUM(total_amount), 0) AS total_income,
-            COALESCE(SUM(CASE WHEN DATE(created_at) = ? THEN total_amount ELSE 0 END), 0) AS today_income
-     FROM orders
-     WHERE status IN ("paid", "processing", "delivered", "completed")'
-);
-$i->execute([$today]);
-$income = $i->fetch();
+$recentStmt = $pdo->query('SELECT o.id, o.order_code, o.customer_name, o.total_amount, o.status, COALESCE(GROUP_CONCAT(oi.product_name ORDER BY oi.id SEPARATOR ", "), "—") AS products FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.id GROUP BY o.id ORDER BY o.created_at DESC LIMIT 5');
+$recentOrders = $recentStmt->fetchAll();
+foreach ($recentOrders as &$order) {
+    if ($order['status'] === 'pending') $order['status'] = 'pending_payment';
+    $order['total_amount'] = (int) $order['total_amount'];
+}
+unset($order);
 
-$incomeChart = [];
-for ($day = 6; $day >= 0; $day--) {
-    $date = date('Y-m-d', strtotime("-$day days"));
-    $incomeChart[$date] = [
-        'date'  => $date,
-        'label' => date('d M', strtotime($date)),
-        'total' => 0,
+$featuredStmt = $pdo->query('SELECT id, name, price, image_url, sold_count FROM products WHERE archived_at IS NULL AND status = "active" ORDER BY is_featured DESC, sold_count DESC, created_at DESC LIMIT 5');
+$featuredProducts = $featuredStmt->fetchAll();
+foreach ($featuredProducts as &$product) {
+    $product['price'] = (int) $product['price'];
+    $product['sold_count'] = (int) $product['sold_count'];
+}
+unset($product);
+
+$incomeStmt = $pdo->query('SELECT DATE(created_at) AS day, DATE_FORMAT(created_at, "%d/%m") AS label, COALESCE(SUM(CASE WHEN status IN ("paid", "processing", "delivered", "completed") THEN total_amount ELSE 0 END), 0) AS total FROM orders WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) GROUP BY DATE(created_at), DATE_FORMAT(created_at, "%d/%m") ORDER BY day ASC');
+$incomeChart = $incomeStmt->fetchAll();
+foreach ($incomeChart as &$row) {
+    $row['total'] = (int) $row['total'];
+}
+unset($row);
+
+$statusStmt = $pdo->query('SELECT CASE WHEN status = "pending" THEN "pending_payment" ELSE status END AS status, COUNT(*) AS total FROM orders GROUP BY CASE WHEN status = "pending" THEN "pending_payment" ELSE status END ORDER BY FIELD(status, "pending_payment", "paid", "processing", "delivered", "completed", "expired", "cancelled")');
+$orderStatusChart = [];
+$statusLabels = [
+    'pending_payment' => 'Menunggu Bayar',
+    'paid' => 'Pembayaran Diterima',
+    'processing' => 'Diproses',
+    'delivered' => 'Dikirim',
+    'completed' => 'Selesai',
+    'expired' => 'Expired',
+    'cancelled' => 'Batal',
+];
+foreach ($statusStmt->fetchAll() as $row) {
+    $status = $row['status'];
+    $orderStatusChart[] = [
+        'status' => $status,
+        'label' => $statusLabels[$status] ?? $status,
+        'total' => (int) $row['total'],
     ];
 }
 
-$ic = $pdo->prepare(
-    'SELECT DATE(created_at) AS order_date, COALESCE(SUM(total_amount), 0) AS total
-     FROM orders
-     WHERE status IN ("paid", "processing", "delivered", "completed")
-       AND DATE(created_at) BETWEEN ? AND ?
-     GROUP BY DATE(created_at)'
-);
-$ic->execute([array_key_first($incomeChart), array_key_last($incomeChart)]);
-foreach ($ic->fetchAll() as $row) {
-    if (isset($incomeChart[$row['order_date']])) {
-        $incomeChart[$row['order_date']]['total'] = (int) $row['total'];
-    }
-}
-$incomeChart = array_values($incomeChart);
-
-// Produk pada pesanan yang sedang diproses
-$pp = $pdo->query(
-    'SELECT COALESCE(SUM(oi.quantity), 0) AS processing_products
-     FROM order_items oi
-     INNER JOIN orders o ON o.id = oi.order_id
-     WHERE o.status IN ("paid", "processing")'
-);
-$processingProducts = $pp->fetch();
-
-// Total testimoni & rata-rata rating
-$t = $pdo->query('SELECT COUNT(*) AS total, ROUND(AVG(rating), 1) AS avg_rating FROM testimonials WHERE status = "visible"');
-$testimonials = $t->fetch();
-
-// Produk terlaris (featured)
-$fp = $pdo->query(
-    'SELECT p.id, p.name, p.price, p.image_url, p.sold_count, p.rating, c.name AS category_name
-     FROM products p
-     LEFT JOIN categories c ON c.id = p.category_id
-     WHERE p.is_featured = 1 AND p.status = "active"
-     ORDER BY p.sold_count DESC
-     LIMIT 5'
-);
-$featuredProducts = $fp->fetchAll();
-
-// Pesanan terbaru (5 teratas)
-$ro = $pdo->query(
-    'SELECT o.id, o.order_code, o.customer_name, o.total_amount, o.status, o.created_at,
-            GROUP_CONCAT(oi.product_name SEPARATOR ", ") AS products
-     FROM orders o
-     LEFT JOIN order_items oi ON oi.order_id = o.id
-     GROUP BY o.id
-     ORDER BY o.created_at DESC
-     LIMIT 5'
-);
-$recentOrders = $ro->fetchAll();
-
-$os = $pdo->query(
-    'SELECT status, COUNT(*) AS total
-     FROM orders
-     GROUP BY status
-     ORDER BY total DESC'
-);
-$orderStatusChart = array_map(function ($row) {
-    $labels = [
-        'pending' => 'Menunggu Pembayaran',
-        'pending_payment' => 'Menunggu Pembayaran',
-        'paid' => 'Pembayaran Diterima',
-        'processing' => 'Diproses',
-        'delivered' => 'Dikirim',
-        'completed' => 'Selesai',
-        'expired' => 'Expired',
-        'cancelled' => 'Batal',
-    ];
-
-    return [
-        'status' => $row['status'],
-        'label'  => $labels[$row['status']] ?? $row['status'],
-        'total'  => (int) $row['total'],
-    ];
-}, $os->fetchAll());
-
-foreach ($recentOrders as &$ord) {
-    $ord['total_amount'] = (int) $ord['total_amount'];
-}
-unset($ord);
-
-json_success('Statistik berhasil dimuat', [
-    'total_products'        => (int) $products['total'],
-    'active_products'       => (int) $products['available'],
-    'available_products'    => (int) $products['available'],
-    'out_of_stock_products' => (int) $products['out_of_stock'],
-    'processing_products'   => (int) $processingProducts['processing_products'],
-    'total_orders'          => (int) $orders['total'],
-    'today_orders'          => (int) $orders['today_count'],
-    'today_income'          => (int) $income['today_income'],
-    'total_income'          => (int) $income['total_income'],
-    'total_testimonials'    => (int) $testimonials['total'],
-    'average_rating'        => $testimonials['avg_rating'] ? (float) $testimonials['avg_rating'] : 0.0,
-    'featured_products'     => $featuredProducts,
-    'recent_orders'         => $recentOrders,
-    'income_chart'          => $incomeChart,
-    'order_status_chart'    => $orderStatusChart,
+json_success('Statistik dashboard berhasil dimuat', [
+    'total_products' => $totalProducts,
+    'active_products' => $availableProducts,
+    'available_products' => $availableProducts,
+    'out_of_stock_products' => $outOfStockProducts,
+    'processing_products' => $processingProducts,
+    'today_income' => $todayIncome,
+    'today_orders' => $todayOrders,
+    'total_income' => $totalIncome,
+    'average_rating' => $averageRating > 0 ? number_format($averageRating, 1) : null,
+    'recent_orders' => $recentOrders,
+    'featured_products' => $featuredProducts,
+    'income_chart' => $incomeChart,
+    'order_status_chart' => $orderStatusChart,
 ]);
