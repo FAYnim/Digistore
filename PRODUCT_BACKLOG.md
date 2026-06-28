@@ -86,8 +86,8 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 8. Perbaiki dashboard order agar action-oriented
 
-- **Status:** Sebagian
-- **Belum:** Dashboard sudah memiliki filter status dan indikator konfirmasi pembayaran, tetapi belum memiliki tab/queue kerja admin yang jelas seperti perlu verifikasi, perlu delivery, bermasalah, dan selesai; belum ada prioritas aksi harian, bulk action, atau tampilan yang benar-benar memandu admin dari satu tahap proses ke tahap berikutnya.
+- **Status:** Selesai
+- **Selesai:** Dashboard sekarang memiliki tab/queue kerja admin yang jelas (Perlu Verifikasi, Menunggu Bayar, Perlu Dikirim, Diproses, Dikirim, Selesai, Semua); setiap tab menampilkan count badge; ada stats bar ringkasan di atas; quick action buttons (Verifikasi, Kirim) tersedia langsung di row; order yang lebih dari 24 jam unpaid di-highlight dengan warna kuning.
 - **Prioritas:** High
 - **Kompleksitas:** Medium
 - **Dependensi:** Status order baru
@@ -97,8 +97,7 @@ Dokumen ini digunakan untuk melacak pekerjaan sebelum produk siap digunakan dan 
 
 ## 9. Perbaiki security headers dan cookie production
 
-- **Status:** Sebagian
-- **Belum:** Cookie session sudah memakai konfigurasi lebih aman, tetapi belum ada security headers lengkap seperti Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, dan enforcement HTTPS production secara konsisten.
+- **Status:** Selesai
 - **Prioritas:** High
 - **Kompleksitas:** Medium
 - **Dependensi:** Deployment production
