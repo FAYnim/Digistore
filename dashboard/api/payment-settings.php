@@ -60,8 +60,8 @@ switch ($method) {
         if (!in_array($qrisEnabled, ['0', '1'], true)) $errors[] = 'Status QRIS tidak valid';
         if (!in_array($bankEnabled, ['0', '1'], true)) $errors[] = 'Status bank transfer tidak valid';
         if ($qrisEnabled === '0' && $bankEnabled === '0') $errors[] = 'Aktifkan minimal satu metode pembayaran';
-        if ($qrisEnabled === '1' && $qrisImage === '') $errors[] = 'QRIS Image URL wajib diisi';
-        if ($qrisImage !== '' && (strlen($qrisImage) > 255 || !filter_var($qrisImage, FILTER_VALIDATE_URL) || parse_url($qrisImage, PHP_URL_SCHEME) !== 'https')) $errors[] = 'QRIS Image URL harus https valid maksimal 255 karakter';
+        if ($qrisEnabled === '1' && $qrisImage === '') $errors[] = 'Gambar QRIS wajib diupload';
+        if ($qrisImage !== '' && (strlen($qrisImage) > 255 || !preg_match('/^uploads\/qris\/.+\.(jpg|jpeg|png)$/i', $qrisImage))) $errors[] = 'Path gambar QRIS tidak valid';
         if (($qrisEnabled === '1' || $bankEnabled === '1') && $instruction === '') $errors[] = 'Instruksi pembayaran wajib diisi';
         if (strlen($instruction) > 1000) $errors[] = 'Instruksi pembayaran maksimal 1000 karakter';
         if ($adminWhatsapp === '') $errors[] = 'Nomor WhatsApp admin wajib diisi';

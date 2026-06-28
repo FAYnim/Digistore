@@ -79,6 +79,29 @@ const api = {
   post:   (url, body)    => apiRequest(url, { method: 'POST',   body: JSON.stringify(body) }),
   put:    (url, body)    => apiRequest(url, { method: 'PUT',    body: JSON.stringify(body) }),
   delete: (url)          => apiRequest(url, { method: 'DELETE' }),
+  upload: async (url, formData) => {
+    if (url.startsWith('/dashboard/api/')) {
+      url = url.replace('/dashboard/api/', 'api/');
+    }
+    showLoader();
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+      const headers = { Accept: 'application/json' };
+      if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+      const res = await fetch(url, { method: 'POST', headers, body: formData });
+      if (res.status === 401) {
+        window.location.href = 'login.php';
+        return { success: false, message: 'Unauthorized', data: null, errors: null };
+      }
+      return await res.json();
+    } catch (err) {
+      console.error('[API Upload Error]', err);
+      return { success: false, message: 'Gagal terhubung ke server', data: null, errors: null };
+    } finally {
+      hideLoader();
+    }
+  },
 };
 
 /**

@@ -1,2 +1,4 @@
 .env
 uploads/payment-proofs/*
+uploads/qris/*
+!uploads/qris/.gitkeep

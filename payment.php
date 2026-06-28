@@ -240,7 +240,7 @@
         <p class="mt-5 font-display text-3xl font-extrabold">${rupiah.format(Number(order.total_amount || 0))}</p>
         ${!allowPayment ? `<div class="mt-5 rounded-2xl border border-[var(--warning)] bg-yellow-50 p-4 text-left text-sm font-bold text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-200">${escapeText(notice)}</div>` : ""}
         ${allowPayment && hasMethod ? "" : allowPayment ? '<p class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-sm font-bold text-[var(--muted)]">Pembayaran belum dikonfigurasi. Hubungi admin.</p>' : ""}
-        ${allowPayment && hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
+        ${allowPayment && hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="dashboard/${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
         ${allowPayment && hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
         ${allowPayment && hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
         ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm">
