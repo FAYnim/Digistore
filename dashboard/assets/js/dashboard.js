@@ -18,9 +18,9 @@ function statusLabel(s) {
 }
 
 function badgeClass(s) {
-  if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible', 'accepted'].includes(s)) return 'badge-green';
-  if (['pending', 'pending_payment', 'draft'].includes(s)) return 'badge-yellow';
-  if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected'].includes(s)) return 'badge-red';
+  if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible', 'accepted', 'available'].includes(s)) return 'badge-green';
+  if (['pending', 'pending_payment', 'draft', 'reserved'].includes(s)) return 'badge-yellow';
+  if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected', 'sold'].includes(s)) return 'badge-red';
   return 'badge-gray';
 }
 
@@ -251,13 +251,52 @@ async function renderProducts() {
   $('#productsEmpty')?.classList.toggle('hidden', products.length > 0);
 }
 
+let productAccounts = [];
+let tempProductAccountId = -1;
+
+function renderProductAccounts() {
+  const accounts = productAccounts || [];
+  const available = accounts.filter((account) => account.status === 'available').length;
+  const reserved = accounts.filter((account) => account.status === 'reserved').length;
+  const sold = accounts.filter((account) => account.status === 'sold').length;
+  $('#productAccountsSummary').textContent = `Tersedia: ${available} | Reserved: ${reserved} | Terjual: ${sold}`;
+  $('#productAccountsTable').innerHTML = accounts.map((account) =>
+    `<tr>
+       <td><pre class="max-w-md whitespace-pre-wrap text-xs font-bold text-slate-600 dark:text-slate-300">${escapeHtml(account.account_data)}</pre></td>
+       <td>${badge(account.status)}</td>
+       <td>
+         <div class="flex flex-wrap gap-2">
+           <button class="btn-soft" type="button" onclick="editProductAccount(${account.id})">Edit</button>
+           <button class="btn-soft" type="button" onclick="deleteProductAccount(${account.id})">Hapus</button>
+           <button class="btn-soft" type="button" onclick="duplicateProductAccount(${account.id})">Duplikat</button>
+         </div>
+       </td>
+     </tr>`
+  ).join('');
+  $('#productAccountsEmpty')?.classList.toggle('hidden', accounts.length > 0);
+}
+
+async function loadProductAccounts(productId) {
+  if (!productId) {
+    productAccounts = [];
+    renderProductAccounts();
+    return;
+  }
+
+  const res = await api.get(`/dashboard/api/product-accounts.php?product_id=${productId}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  productAccounts = res.data || [];
+  renderProductAccounts();
+  renderProducts();
+}
+
 function resetProductForm() {
   $('#productForm').reset();
   $('#productId').value = '';
   $('#productImage').value = '';
-  $('#productAccounts').value = '';
-  $('#productAccountsSummary').textContent = '';
   $('#productModalTitle').textContent = 'Tambah Produk';
+  productAccounts = [];
+  renderProductAccounts();
 }
 
 window.editProduct = async (id) => {
@@ -270,19 +309,59 @@ window.editProduct = async (id) => {
   $('#productName').value            = p.name;
   $('#productPrice').value           = p.price;
   $('#productOriginalPrice').value   = p.original_price || '';
-  $('#productAccounts').value        = '';
   $('#productStatus').value          = p.status;
   $('#productImage').value           = p.image_url || '';
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
 
-  const accounts = p.accounts || [];
-  const available = accounts.filter((account) => account.status === 'available').length;
-  const reserved = accounts.filter((account) => account.status === 'reserved').length;
-  const sold = accounts.filter((account) => account.status === 'sold').length;
-  $('#productAccountsSummary').textContent = `Tersedia: ${available} | Reserved: ${reserved} | Terjual: ${sold}`;
-
+  productAccounts = p.accounts || [];
+  renderProductAccounts();
   openModal('#productModal');
+};
+
+window.editProductAccount = (id) => {
+  const account = productAccounts.find((item) => Number(item.id) === Number(id));
+  if (!account) return;
+  $('#accountModalTitle').textContent = 'Edit Akun';
+  $('#accountId').value = account.id;
+  $('#accountData').value = account.account_data || '';
+  $('#accountStatus').value = account.status || 'available';
+  openModal('#accountModal');
+};
+
+window.deleteProductAccount = async (id) => {
+  const account = productAccounts.find((item) => Number(item.id) === Number(id));
+  if (!account) return;
+  const force = ['reserved', 'sold'].includes(account.status) ? confirm(`Akun status ${account.status}. Tetap hapus?`) : true;
+  if (!force) return;
+
+  if (Number(id) < 0) {
+    productAccounts = productAccounts.filter((item) => Number(item.id) !== Number(id));
+    renderProductAccounts();
+    return;
+  }
+
+  const res = await api.delete(`/dashboard/api/product-accounts.php?id=${id}${force ? '&force=1' : ''}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  showToast(res.message);
+  loadProductAccounts($('#productId').value);
+};
+
+window.duplicateProductAccount = async (id) => {
+  const productId = $('#productId').value;
+  const account = productAccounts.find((item) => Number(item.id) === Number(id));
+  if (!account) return;
+
+  if (!productId || Number(id) < 0) {
+    productAccounts.unshift({ ...account, id: tempProductAccountId--, status: 'available' });
+    renderProductAccounts();
+    return;
+  }
+
+  const res = await api.post('/dashboard/api/product-accounts.php', { product_id: parseInt(productId), source_id: id, account_data: account.account_data });
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  showToast(res.message);
+  loadProductAccounts(productId);
 };
 
 let _deleteProductId = null;
@@ -305,7 +384,7 @@ function initProducts() {
       description:    $('#productDescription').value,
       price:          parseInt($('#productPrice').value),
       original_price: $('#productOriginalPrice').value ? parseInt($('#productOriginalPrice').value) : null,
-      accounts_text:  $('#productAccounts').value.trim(),
+      accounts_text:  '',
       image_url:      $('#productImage').value,
       status:         $('#productStatus').value,
       is_featured:    $('#productFeatured').checked,
@@ -319,9 +398,56 @@ function initProducts() {
       showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error');
       return;
     }
+    const savedProductId = res.data?.id || id;
+    const pendingAccounts = productAccounts.filter((account) => Number(account.id) < 0);
+    for (const account of pendingAccounts) {
+      const accountRes = await api.post('/dashboard/api/product-accounts.php', { product_id: parseInt(savedProductId), account_data: account.account_data, status: account.status });
+      if (!accountRes.success) { showToast(accountRes.message, 'error'); return; }
+    }
     showToast(res.message);
+    $('#productId').value = savedProductId;
     closeModals();
     renderProducts();
+  });
+
+  $('#addProductAccountBtn')?.addEventListener('click', () => {
+    $('#accountModalTitle').textContent = 'Tambah Akun';
+    $('#accountForm').reset();
+    $('#accountId').value = '';
+    $('#accountStatus').value = 'available';
+    openModal('#accountModal');
+  });
+
+  $('#accountForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const productId = $('#productId').value;
+    const accountId = $('#accountId').value;
+    const payload = {
+      product_id: productId ? parseInt(productId) : 0,
+      account_data: $('#accountData').value,
+      status: $('#accountStatus').value,
+    };
+
+    if (!productId || Number(accountId) < 0) {
+      if (accountId) {
+        productAccounts = productAccounts.map((account) => Number(account.id) === Number(accountId) ? { ...account, account_data: payload.account_data, status: payload.status } : account);
+      } else {
+        productAccounts.unshift({ id: tempProductAccountId--, product_id: 0, account_data: payload.account_data, status: payload.status });
+      }
+      closeModals();
+      openModal('#productModal');
+      renderProductAccounts();
+      return;
+    }
+
+    const res = accountId
+      ? await api.put(`/dashboard/api/product-accounts.php?id=${accountId}`, payload)
+      : await api.post('/dashboard/api/product-accounts.php', payload);
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    openModal('#productModal');
+    loadProductAccounts(productId);
   });
 
   $('#confirmDelete')?.addEventListener('click', async () => {
