@@ -255,6 +255,8 @@ function resetProductForm() {
   $('#productForm').reset();
   $('#productId').value = '';
   $('#productImage').value = '';
+  $('#productAccounts').value = '';
+  $('#productAccountsSummary').textContent = '';
   $('#productModalTitle').textContent = 'Tambah Produk';
 }
 
@@ -268,11 +270,17 @@ window.editProduct = async (id) => {
   $('#productName').value            = p.name;
   $('#productPrice').value           = p.price;
   $('#productOriginalPrice').value   = p.original_price || '';
-  $('#productStock').value           = p.stock;
+  $('#productAccounts').value        = '';
   $('#productStatus').value          = p.status;
   $('#productImage').value           = p.image_url || '';
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
+
+  const accounts = p.accounts || [];
+  const available = accounts.filter((account) => account.status === 'available').length;
+  const reserved = accounts.filter((account) => account.status === 'reserved').length;
+  const sold = accounts.filter((account) => account.status === 'sold').length;
+  $('#productAccountsSummary').textContent = `Tersedia: ${available} | Reserved: ${reserved} | Terjual: ${sold}`;
 
   openModal('#productModal');
 };
@@ -297,7 +305,7 @@ function initProducts() {
       description:    $('#productDescription').value,
       price:          parseInt($('#productPrice').value),
       original_price: $('#productOriginalPrice').value ? parseInt($('#productOriginalPrice').value) : null,
-      stock:          parseInt($('#productStock').value),
+      accounts_text:  $('#productAccounts').value.trim(),
       image_url:      $('#productImage').value,
       status:         $('#productStatus').value,
       is_featured:    $('#productFeatured').checked,
