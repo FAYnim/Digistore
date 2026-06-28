@@ -5,7 +5,7 @@
  * GET    /dashboard/api/products.php?id=N                  — detail satu produk
  * POST   /dashboard/api/products.php                       — tambah produk
  * PUT    /dashboard/api/products.php?id=N                  — edit produk
- * DELETE /dashboard/api/products.php?id=N                  — hapus produk
+ * DELETE /dashboard/api/products.php?id=N                  — arsipkan produk
  */
 
 require_once __DIR__ . '/../auth/check-auth.php';
@@ -143,7 +143,7 @@ switch ($method) {
 
     case 'GET':
         if ($id) {
-            $stmt = $pdo->prepare(product_select_sql() . ' WHERE p.id = ?');
+            $stmt = $pdo->prepare(product_select_sql() . ' WHERE p.id = ? AND p.archived_at IS NULL');
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) json_error('Produk tidak ditemukan', null, 404);
@@ -156,7 +156,7 @@ switch ($method) {
             json_success('Produk berhasil dimuat', $row);
         }
 
-        $conditions = [];
+        $conditions = ['p.archived_at IS NULL'];
         $params     = [];
 
         if (!empty($_GET['search'])) {
@@ -231,7 +231,7 @@ switch ($method) {
     case 'PUT':
         if (!$id) json_error('ID produk diperlukan', null, 400);
 
-        $old = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+        $old = $pdo->prepare('SELECT * FROM products WHERE id = ? AND archived_at IS NULL');
         $old->execute([$id]);
         $current = $old->fetch();
         if (!$current) json_error('Produk tidak ditemukan', null, 404);
@@ -278,13 +278,13 @@ switch ($method) {
     case 'DELETE':
         if (!$id) json_error('ID produk diperlukan', null, 400);
 
-        $chk = $pdo->prepare('SELECT id FROM products WHERE id = ?');
+        $chk = $pdo->prepare('SELECT id FROM products WHERE id = ? AND archived_at IS NULL');
         $chk->execute([$id]);
         if (!$chk->fetch()) json_error('Produk tidak ditemukan', null, 404);
 
-        $stmt = $pdo->prepare('DELETE FROM products WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE products SET archived_at = NOW(), status = "draft", is_featured = 0 WHERE id = ? AND archived_at IS NULL');
         $stmt->execute([$id]);
-        json_success('Produk berhasil dihapus');
+        json_success('Produk berhasil diarsipkan');
         break;
 
     default:

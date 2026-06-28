@@ -62,7 +62,7 @@ switch ($method) {
         $stmt = $pdo->query(
             'SELECT c.*, COUNT(p.id) AS product_count
              FROM categories c
-             LEFT JOIN products p ON p.category_id = c.id
+             LEFT JOIN products p ON p.category_id = c.id AND p.archived_at IS NULL
              GROUP BY c.id
              ORDER BY c.sort_order ASC, c.name ASC'
         );

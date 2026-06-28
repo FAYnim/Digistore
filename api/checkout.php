@@ -40,7 +40,7 @@ try {
 
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare('SELECT id, name, price, status FROM products WHERE id = ? FOR UPDATE');
+    $stmt = $pdo->prepare('SELECT id, name, price, status FROM products WHERE id = ? AND archived_at IS NULL FOR UPDATE');
     $stmt->execute([$productId]);
     $product = $stmt->fetch();
 

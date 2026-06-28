@@ -12,7 +12,7 @@ $allowedSort = [
     'sold_high'   => 'p.sold_count DESC',
 ];
 
-$conditions = ["p.status IN ('active', 'out_of_stock')", "(c.status = 'active' OR p.category_id IS NULL)"];
+$conditions = ["p.archived_at IS NULL", "p.status IN ('active', 'out_of_stock')", "(c.status = 'active' OR p.category_id IS NULL)"];
 $params = [];
 $featured = isset($_GET['featured']) && $_GET['featured'] === 'true';
 $slug = isset($_GET['slug']) ? trim($_GET['slug']) : '';

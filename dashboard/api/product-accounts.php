@@ -29,7 +29,7 @@ function account_row(PDO $pdo, int $id): ?array
 
 function ensure_product_exists(PDO $pdo, int $product_id): void
 {
-    $stmt = $pdo->prepare('SELECT id FROM products WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id FROM products WHERE id = ? AND archived_at IS NULL');
     $stmt->execute([$product_id]);
     if (!$stmt->fetch()) json_error('Produk tidak ditemukan', null, 404);
 }

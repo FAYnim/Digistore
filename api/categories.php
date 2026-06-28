@@ -17,6 +17,7 @@ try {
          FROM categories c
          LEFT JOIN products p
            ON p.category_id = c.id
+            AND p.archived_at IS NULL
            AND p.status IN ('active', 'out_of_stock')
          WHERE c.status = 'active'
          GROUP BY c.id
