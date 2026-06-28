@@ -79,7 +79,9 @@ CREATE TABLE orders (
   note             TEXT DEFAULT NULL,
   delivery_note    TEXT DEFAULT NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_orders_status_payment_deadline (status, payment_deadline)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------

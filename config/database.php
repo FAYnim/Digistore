@@ -11,6 +11,12 @@ define('DB_CHARSET', env_value('DB_CHARSET', 'utf8mb4'));
 
 set_exception_handler(function (Throwable $e): void {
     error_log('Unhandled exception: ' . $e->getMessage());
+
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, 'Terjadi kesalahan server.' . PHP_EOL);
+        exit(1);
+    }
+
     json_error('Terjadi kesalahan server.', null, 500);
 });
 
@@ -27,5 +33,11 @@ try {
     );
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
+
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, 'Koneksi database gagal. Periksa konfigurasi server.' . PHP_EOL);
+        exit(1);
+    }
+
     json_error('Koneksi database gagal. Periksa konfigurasi server.', null, 500);
 }
