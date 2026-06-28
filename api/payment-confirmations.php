@@ -43,7 +43,7 @@ try {
 
     if (!$order) json_error('Order tidak ditemukan.', null, 404);
     if ($order['status'] === 'expired') json_error('Order ini sudah expired.', null, 422);
-    if (!in_array($order['status'], ['pending', 'pending_payment'], true)) json_error('Order ini tidak menunggu pembayaran.', null, 422);
+    if (!in_array($order['status'], ['pending_payment'], true)) json_error('Order ini tidak menunggu pembayaran.', null, 422);
 
     $uploadDir = dirname(__DIR__) . '/uploads/payment-proofs';
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) json_error('Folder upload tidak tersedia.', null, 500);
@@ -54,6 +54,8 @@ try {
 
     if (!move_uploaded_file($_FILES['proof']['tmp_name'], $targetPath)) json_error('Gagal menyimpan bukti bayar.', null, 500);
 
+    $pdo->beginTransaction();
+
     $insert = $pdo->prepare('INSERT INTO payment_confirmations (order_id, sender_name, payment_method, note, proof_path) VALUES (?, ?, ?, ?, ?)');
     $insert->execute([
         (int) $order['id'],
@@ -63,10 +65,16 @@ try {
         $relativePath,
     ]);
 
+    $updateOrder = $pdo->prepare('UPDATE orders SET status = "pending_verify" WHERE id = ? AND status = "pending_payment"');
+    $updateOrder->execute([(int) $order['id']]);
+
+    $pdo->commit();
+
     json_success('Konfirmasi pembayaran berhasil dikirim. Admin akan melakukan verifikasi.', [
         'proof_path' => $relativePath,
     ], 201);
 } catch (Throwable $e) {
+    if (isset($pdo) && $pdo->inTransaction()) $pdo->rollBack();
     error_log('Payment confirmation failed: ' . $e->getMessage());
     json_error('Gagal mengirim konfirmasi pembayaran.', null, 500);
 }

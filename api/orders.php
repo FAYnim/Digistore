@@ -23,7 +23,8 @@ try {
     $stmt->execute([$code]);
     $order = $stmt->fetch();
 
-    if ($order['status'] === 'pending') $order['status'] = 'pending_payment';
+    $legacyStatusMap = ['pending' => 'pending_payment', 'paid' => 'completed', 'processing' => 'completed', 'delivered' => 'completed'];
+    if (isset($legacyStatusMap[$order['status']])) $order['status'] = $legacyStatusMap[$order['status']];
 
     $items = $pdo->prepare('SELECT product_name, quantity, price, subtotal FROM order_items WHERE order_id = ?');
     $items->execute([(int) $order['id']]);
@@ -56,11 +57,8 @@ try {
     }
 
     $statusLabels = [
-        'pending' => 'Menunggu Pembayaran',
         'pending_payment' => 'Menunggu Pembayaran',
-        'paid' => 'Pembayaran Diterima',
-        'processing' => 'Diproses',
-        'delivered' => 'Dikirim',
+        'pending_verify' => 'Menunggu Verifikasi',
         'completed' => 'Selesai',
         'expired' => 'Expired',
         'cancelled' => 'Dibatalkan',

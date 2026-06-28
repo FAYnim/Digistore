@@ -1,14 +1,14 @@
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
-const statusLabels = { pending: "Menunggu Pembayaran", pending_payment: "Menunggu Pembayaran", paid: "Pembayaran Diterima", processing: "Diproses", delivered: "Dikirim", completed: "Selesai", expired: "Expired", cancelled: "Dibatalkan" };
-const statusStyles = { pending: "bg-yellow-100 text-yellow-800", pending_payment: "bg-yellow-100 text-yellow-800", paid: "bg-blue-100 text-blue-800", processing: "bg-indigo-100 text-indigo-800", delivered: "bg-emerald-100 text-emerald-800", completed: "bg-green-100 text-green-800", expired: "bg-red-100 text-red-800", cancelled: "bg-slate-200 text-slate-700" };
+const statusLabels = { pending_payment: "Menunggu Pembayaran", pending_verify: "Menunggu Verifikasi", completed: "Selesai", expired: "Expired", cancelled: "Dibatalkan" };
+const statusStyles = { pending_payment: "bg-yellow-100 text-yellow-800", pending_verify: "bg-blue-100 text-blue-800", completed: "bg-green-100 text-green-800", expired: "bg-red-100 text-red-800", cancelled: "bg-slate-200 text-slate-700" };
 const code = new URLSearchParams(window.location.search).get("code");
 
 function escapeText(value) {
-  return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&", "<": "<", ">": ">", "'": "'", '"': """ }[char]));
+  return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
 function isPendingWithDeadline(order) {
-  return ["pending", "pending_payment"].includes(order.status) && order.payment_deadline;
+  return order.status === "pending_payment" && order.payment_deadline;
 }
 
 function formatCountdown(seconds) {
@@ -88,11 +88,9 @@ function updateThemeIcon() {
 }
 
 function getStatusInstruction(order) {
-  if (["pending", "pending_payment"].includes(order.status)) return "Selesaikan pembayaran lalu konfirmasi ke admin.";
-  if (order.status === "paid") return "Pembayaran diterima. Pesanan masuk antrean proses.";
-  if (order.status === "processing") return "Pesanan sedang diproses admin.";
-  if (order.status === "delivered") return "Produk sudah dikirim. Cek delivery note di bawah.";
-  if (order.status === "completed") return "Pesanan sudah selesai.";
+  if (order.status === "pending_payment") return "Selesaikan pembayaran lalu upload bukti bayar.";
+  if (order.status === "pending_verify") return "Bukti pembayaran sedang menunggu verifikasi admin.";
+  if (order.status === "completed") return "Pesanan selesai. Credentials tersedia di bawah.";
   if (order.status === "expired") return "Deadline pembayaran sudah lewat. Buat pesanan baru jika masih ingin membeli.";
   if (order.status === "cancelled") return "Pesanan ini dibatalkan. Hubungi admin jika butuh bantuan.";
   return "Status pesanan berhasil dimuat.";
@@ -108,7 +106,7 @@ function buildWhatsappLink(order) {
 function renderActions(order) {
   const waLink = buildWhatsappLink(order);
   const hasWhatsapp = waLink !== "#";
-  const isPendingPayment = ["pending", "pending_payment"].includes(order.status);
+  const isPendingPayment = order.status === "pending_payment";
   const whatsappLabel = isPendingPayment ? "Konfirmasi WhatsApp" : "Hubungi Admin";
   const whatsappButton = hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">${whatsappLabel}</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>';
   const catalogButton = '<a class="small-btn text-center" href="index.php#produk">Kembali ke Katalog</a>';
@@ -140,8 +138,8 @@ function renderItems(items) {
 }
 
 function renderDeliveryNote(order) {
-  if (!["delivered", "completed"].includes(order.status)) return "";
-  const note = order.delivery_note ? escapeText(order.delivery_note) : "Pesanan selesai. Hubungi admin jika produk belum diterima.";
+  if (order.status !== "completed") return "";
+  const note = order.delivery_note ? escapeText(order.delivery_note) : "Pesanan selesai. Hubungi admin jika credentials belum tampil.";
   return `
     <section class="modal-card lg:col-span-2">
       <h3 class="font-display text-xl font-extrabold">Delivery Note</h3>

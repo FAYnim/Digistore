@@ -76,7 +76,7 @@ CREATE TABLE orders (
   total_amount     INT NOT NULL DEFAULT 0,
   payment_method   VARCHAR(50) DEFAULT NULL,
   payment_deadline DATETIME DEFAULT NULL,
-  status           ENUM('pending', 'pending_payment', 'paid', 'processing', 'delivered', 'completed', 'expired', 'cancelled') DEFAULT 'pending_payment',
+  status           ENUM('pending_payment', 'pending_verify', 'completed', 'expired', 'cancelled') DEFAULT 'pending_payment',
   note             TEXT DEFAULT NULL,
   delivery_note    TEXT DEFAULT NULL,
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

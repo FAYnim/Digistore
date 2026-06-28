@@ -13,13 +13,13 @@ const shortCode = (s) => s && s.length > 12 ? `${s.slice(0, 8)}…${s.slice(-3)}
 const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 
 function statusLabel(s) {
-  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', paid: 'Pembayaran Diterima', processing: 'Diproses', delivered: 'Dikirim', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi', accepted: 'Diterima', rejected: 'Ditolak' };
+  const map = { active: 'Aktif', draft: 'Draft', out_of_stock: 'Habis', pending: 'Menunggu Pembayaran', pending_payment: 'Menunggu Pembayaran', pending_verify: 'Menunggu Verifikasi', paid: 'Selesai', processing: 'Selesai', delivered: 'Selesai', completed: 'Selesai', expired: 'Expired', cancelled: 'Batal', visible: 'Tampil', hidden: 'Sembunyi', accepted: 'Diterima', rejected: 'Ditolak' };
   return map[s] ?? s;
 }
 
 function badgeClass(s) {
   if (['active', 'paid', 'processing', 'delivered', 'completed', 'visible', 'accepted', 'available'].includes(s)) return 'badge-green';
-  if (['pending', 'pending_payment', 'draft', 'reserved'].includes(s)) return 'badge-yellow';
+  if (['pending', 'pending_payment', 'pending_verify', 'draft', 'reserved'].includes(s)) return 'badge-yellow';
   if (['out_of_stock', 'expired', 'cancelled', 'hidden', 'rejected', 'sold'].includes(s)) return 'badge-red';
   return 'badge-gray';
 }
@@ -551,17 +551,18 @@ function initCategories() {
 /* ----------------------------------------------------------------
  * Orders (orders.php)
  * --------------------------------------------------------------- */
-let activeOrderTab = 'pending_confirm';
+let activeOrderTab = 'pending_payment';
 let orderQueueCounts = {};
 
-function getQueueFromStatus(status, pendingConfirmations) {
-  if (pendingConfirmations > 0) return 'pending_confirm';
+function getQueueFromStatus(status, pendingConfirmations = 0) {
+  if (pendingConfirmations > 0) return 'pending_verify';
   const map = {
     pending_payment: 'pending_payment',
     pending: 'pending_payment',
-    paid: 'paid',
-    processing: 'processing',
-    delivered: 'delivered',
+    pending_verify: 'pending_verify',
+    paid: 'completed',
+    processing: 'completed',
+    delivered: 'completed',
     completed: 'completed',
     expired: 'expired',
     cancelled: 'cancelled',
@@ -570,7 +571,7 @@ function getQueueFromStatus(status, pendingConfirmations) {
 }
 
 function isOrderUrgent(createdAt, status) {
-  if (['pending_payment', 'pending', 'pending_confirm'].includes(status)) {
+  if (['pending_payment', 'pending_verify', 'pending'].includes(status)) {
     const created = new Date(createdAt);
     const now = new Date();
     const hours = (now - created) / (1000 * 60 * 60);
@@ -586,10 +587,9 @@ function updateTabCounts(data) {
     counts[queue] = (counts[queue] || 0) + 1;
   });
   counts.all = data.length;
-  counts.pending_confirm = (counts.pending_confirm || 0) + (counts.pending_payment || 0);
   orderQueueCounts = counts;
 
-  const tabs = ['pending_confirm', 'paid', 'processing', 'delivered', 'completed', 'all'];
+  const tabs = ['pending_payment', 'pending_verify', 'completed', 'expired', 'cancelled', 'all'];
   tabs.forEach(tab => {
     const el = $(`#tabCount-${tab}`);
     if (el) el.textContent = counts[tab] || 0;
@@ -610,28 +610,21 @@ function renderOrders() {
       ? res.data
       : res.data.filter(o => {
         const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
-        return activeOrderTab === 'pending_confirm'
-          ? ['pending_confirm', 'pending_payment'].includes(queue)
-          : queue === activeOrderTab;
+        return queue === activeOrderTab;
       });
 
     $('#ordersTable').innerHTML = orders.map(o => {
       const urgent = isOrderUrgent(o.created_at, o.status);
       const queue = getQueueFromStatus(o.status, o.pending_confirmations || 0);
-      const isActionable = ['pending_confirm', 'paid'].includes(queue);
+      const isActionable = queue === 'pending_verify';
       const rowClass = urgent ? 'order-row-urgent' : (isActionable ? 'order-row-actionable' : '');
 
       let actions = `<button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>`;
 
-      if (o.pending_confirmations > 0) {
+      if (queue === 'pending_verify' && o.pending_confirmations > 0) {
         actions = `
           <button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>
           <button class="btn-primary text-xs py-1 px-2" onclick="showOrderAndVerify(${o.id})">Verifikasi</button>
-        `;
-      } else if (o.status === 'paid') {
-        actions = `
-          <button class="btn-soft" onclick="showOrder(${o.id})">Detail</button>
-          <button class="btn-primary text-xs py-1 px-2" onclick="quickDeliver(${o.id})">Kirim</button>
         `;
       }
 
@@ -654,16 +647,6 @@ function renderOrders() {
 
 window.showOrderAndVerify = async (id) => {
   await showOrder(id);
-};
-
-window.quickDeliver = async (id) => {
-  const note = prompt('Masukkan delivery note (link/akun):');
-  if (note === null) return;
-
-  const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { delivery_note: note });
-  if (!res.success) { showToast(res.message, 'error'); return; }
-  showToast('Pesanan berhasil dikirim');
-  renderOrders();
 };
 
 window.showOrder = async (id) => {
@@ -725,8 +708,7 @@ window.showOrder = async (id) => {
 
   $('#orderId').value = o.id;
   $('#orderDeliveryNote').value = o.delivery_note || '';
-  $('#deliveryNoteSection')?.classList.toggle('hidden', !['paid', 'processing', 'delivered', 'completed'].includes(o.status));
-  $('#completeOrder')?.classList.toggle('hidden', !(o.status === 'delivered' && !!o.delivery_note));
+  $('#deliveryNoteSection')?.classList.toggle('hidden', o.status !== 'completed');
   openModal('#orderModal');
 };
 
@@ -760,24 +742,6 @@ function initOrders() {
     searchTimeout = setTimeout(renderOrders, 300);
   });
 
-  $('#saveOrderStatus')?.addEventListener('click', async () => {
-    const id = $('#orderId').value;
-    const delivery_note = $('#orderDeliveryNote').value.trim();
-    const res = await api.put(`/dashboard/api/orders.php?id=${id}`, { delivery_note });
-    if (!res.success) { showToast(res.message, 'error'); return; }
-    showToast(res.message);
-    closeModals();
-    renderOrders();
-  });
-
-  $('#completeOrder')?.addEventListener('click', async () => {
-    const id = $('#orderId').value;
-    const res = await api.post('/dashboard/api/orders.php?action=complete_order', { order_id: id });
-    if (!res.success) { showToast(res.message, 'error'); return; }
-    showToast(res.message);
-    closeModals();
-    renderOrders();
-  });
 }
 
 /* ----------------------------------------------------------------

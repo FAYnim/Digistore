@@ -8,11 +8,11 @@ renderHeader($pageTitle, $activePage);
   <div><h2 class="text-2xl font-black">Pesanan</h2><p class="text-sm text-slate-500 dark:text-slate-400">Kelola dan pantau status pesanan.</p></div>
   <div class="card p-4">
     <div class="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800 -mx-4 px-4" id="orderTabs">
-      <button class="tab-btn active" data-tab="pending_confirm"><span class="tab-label">Perlu Verifikasi</span> <span class="tab-count" id="tabCount-pending_confirm">0</span></button>
-      <button class="tab-btn" data-tab="paid"><span class="tab-label">Perlu Dikirim</span> <span class="tab-count" id="tabCount-paid">0</span></button>
-      <button class="tab-btn" data-tab="processing"><span class="tab-label">Diproses</span> <span class="tab-count" id="tabCount-processing">0</span></button>
-      <button class="tab-btn" data-tab="delivered"><span class="tab-label">Dikirim</span> <span class="tab-count" id="tabCount-delivered">0</span></button>
+      <button class="tab-btn active" data-tab="pending_payment"><span class="tab-label">Menunggu Pembayaran</span> <span class="tab-count" id="tabCount-pending_payment">0</span></button>
+      <button class="tab-btn" data-tab="pending_verify"><span class="tab-label">Perlu Verifikasi</span> <span class="tab-count" id="tabCount-pending_verify">0</span></button>
       <button class="tab-btn" data-tab="completed"><span class="tab-label">Selesai</span> <span class="tab-count" id="tabCount-completed">0</span></button>
+      <button class="tab-btn" data-tab="expired"><span class="tab-label">Expired</span> <span class="tab-count" id="tabCount-expired">0</span></button>
+      <button class="tab-btn" data-tab="cancelled"><span class="tab-label">Batal</span> <span class="tab-count" id="tabCount-cancelled">0</span></button>
       <button class="tab-btn" data-tab="all"><span class="tab-label">Semua</span> <span class="tab-count" id="tabCount-all">0</span></button>
     </div>
   </div>
@@ -21,7 +21,7 @@ renderHeader($pageTitle, $activePage);
   </div>
   <div class="rounded-2xl border border-blue-100 bg-blue-50/80 p-4 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100">
     <p class="font-bold">Tips kerja</p>
-    <p class="mt-1">Tab <span class="font-semibold">Perlu Verifikasi</span> menampilkan order menunggu bayar atau bukti bayar yang belum diproses. Tab <span class="font-semibold">Perlu Dikirim</span> menampilkan order yang sudah dibayar dan siap dikirim.</p>
+    <p class="mt-1">Order menunggu pembayaran berpindah ke <span class="font-semibold">Perlu Verifikasi</span> setelah buyer upload bukti bayar. Jika diterima, credentials otomatis tampil dan order menjadi selesai.</p>
   </div>
   <div class="card overflow-hidden">
     <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
@@ -50,13 +50,11 @@ renderHeader($pageTitle, $activePage);
     <div class="grid gap-3 text-sm md:grid-cols-2" id="orderDetail"></div>
     <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800 hidden" id="deliveryNoteSection">
       <input id="orderId" type="hidden">
-      <label class="block font-bold">Delivery Note
-        <textarea class="input mt-1 min-h-28" id="orderDeliveryNote" placeholder="Link, akun, atau catatan pengiriman."></textarea>
+      <label class="block font-bold">Credentials
+        <textarea class="input mt-1 min-h-28" id="orderDeliveryNote" placeholder="Credentials akan tampil setelah pembayaran diterima." readonly></textarea>
       </label>
       <div class="mt-3 flex justify-end gap-2">
         <button class="btn-soft" data-close-modal type="button">Tutup</button>
-        <button class="btn-soft hidden" id="completeOrder" type="button">Tandai Selesai</button>
-        <button class="btn-primary" id="saveOrderStatus" type="button">Simpan Delivery Note</button>
       </div>
     </div>
     </div>

@@ -9,7 +9,7 @@ function expire_pending_orders(PDO $pdo, ?int $orderId = null): array
     try {
         if ($ownTransaction) $pdo->beginTransaction();
 
-        $sql = 'SELECT id, order_code FROM orders WHERE status IN ("pending", "pending_payment") AND payment_deadline IS NOT NULL AND payment_deadline < NOW()';
+        $sql = 'SELECT id, order_code FROM orders WHERE status = "pending_payment" AND payment_deadline IS NOT NULL AND payment_deadline < NOW()';
         $params = [];
 
         if ($orderId !== null) {
@@ -27,7 +27,7 @@ function expire_pending_orders(PDO $pdo, ?int $orderId = null): array
             $ids = array_map(static fn(array $order): int => (int) $order['id'], $orders);
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
-            $updateOrders = $pdo->prepare("UPDATE orders SET status = 'expired' WHERE id IN ($placeholders) AND status IN ('pending', 'pending_payment')");
+            $updateOrders = $pdo->prepare("UPDATE orders SET status = 'expired' WHERE id IN ($placeholders) AND status = 'pending_payment'");
             $updateOrders->execute($ids);
 
             $releaseAccounts = $pdo->prepare("UPDATE product_accounts SET status = 'available', order_id = NULL WHERE order_id IN ($placeholders) AND status = 'reserved'");

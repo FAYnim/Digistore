@@ -59,11 +59,8 @@
     const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
     const code = new URLSearchParams(window.location.search).get("code");
     const statusLabels = {
-      pending: "Menunggu Pembayaran",
       pending_payment: "Menunggu Pembayaran",
-      paid: "Pembayaran Diterima",
-      processing: "Diproses",
-      delivered: "Dikirim",
+      pending_verify: "Menunggu Verifikasi",
       completed: "Selesai",
       expired: "Expired",
       cancelled: "Dibatalkan",
@@ -92,13 +89,13 @@
     }
 
     function canSubmitPayment(order) {
-      if (!["pending", "pending_payment"].includes(order.status)) return false;
+      if (order.status !== "pending_payment") return false;
       if (!order.payment_deadline) return true;
       return new Date(order.payment_deadline) > new Date();
     }
 
     function isPendingWithDeadline(order) {
-      return ["pending", "pending_payment"].includes(order.status) && order.payment_deadline;
+      return order.status === "pending_payment" && order.payment_deadline;
     }
 
     function formatCountdown(seconds) {
@@ -155,8 +152,8 @@
 
     function paymentStatusNotice(order) {
       const status = statusLabels[order.status] || order.status;
-      if (["paid", "processing"].includes(order.status)) return `Pembayaran untuk order ini sudah diterima. Status saat ini: ${status}. Jangan lakukan pembayaran ulang.`;
-      if (["delivered", "completed"].includes(order.status)) return `Order ini sudah ${status.toLowerCase()}. Cek halaman status untuk detail pesanan.`;
+      if (order.status === "pending_verify") return "Bukti pembayaran sudah dikirim dan sedang menunggu verifikasi admin.";
+      if (order.status === "completed") return `Order ini sudah ${status.toLowerCase()}. Cek halaman status untuk detail pesanan.`;
       if (["expired", "cancelled"].includes(order.status)) return `Order ini sudah ${status.toLowerCase()}. Jangan lakukan pembayaran untuk order ini.`;
       return "";
     }
