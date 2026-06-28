@@ -105,7 +105,32 @@ CREATE TABLE order_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------
--- 6. testimonials
+-- 6. product_accounts
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS product_accounts (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  product_id   INT NOT NULL,
+  account_data TEXT NOT NULL,
+  status       ENUM('available', 'reserved', 'sold') NOT NULL DEFAULT 'available',
+  order_id     INT NULL,
+  sold_at      TIMESTAMP NULL DEFAULT NULL,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_product_accounts_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_product_accounts_order
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+    ON DELETE SET NULL,
+
+  INDEX idx_product_accounts_product_status (product_id, status),
+  INDEX idx_product_accounts_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------------
+-- 7. testimonials
 -- ------------------------------------------------------------
 CREATE TABLE testimonials (
   id         INT AUTO_INCREMENT PRIMARY KEY,

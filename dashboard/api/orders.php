@@ -129,14 +129,41 @@ switch ($method) {
         if ($confirmation['verification_status'] !== 'pending') json_error('Konfirmasi ini sudah diverifikasi', null, 422);
 
         $verificationStatus = $action === 'accept' ? 'accepted' : 'rejected';
-        $orderStatus = $action === 'accept' ? 'paid' : 'pending_payment';
+        $orderStatus = $action === 'accept' ? 'delivered' : 'pending_payment';
 
         $pdo->beginTransaction();
+
+        $reservedAccount = null;
+        if ($action === 'accept') {
+            $accountStmt = $pdo->prepare('SELECT id, account_data FROM product_accounts WHERE order_id = ? AND status = "reserved" LIMIT 1 FOR UPDATE');
+            $accountStmt->execute([(int) $confirmation['order_id']]);
+            $reservedAccount = $accountStmt->fetch();
+
+            if (!$reservedAccount) {
+                $pdo->rollBack();
+                json_error('Tidak ada akun yang direservasi untuk order ini', null, 422);
+            }
+        }
+
         $updateConfirmation = $pdo->prepare('UPDATE payment_confirmations SET verification_status = ?, admin_note = ?, verified_by = ?, verified_at = NOW() WHERE id = ?');
         $updateConfirmation->execute([$verificationStatus, $adminNote !== '' ? $adminNote : null, $_SESSION['admin_id'] ?? null, $confirmationId]);
 
-        $updateOrder = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
-        $updateOrder->execute([$orderStatus, (int) $confirmation['order_id']]);
+        if ($action === 'accept') {
+            $soldStmt = $pdo->prepare('UPDATE product_accounts SET status = "sold", sold_at = NOW() WHERE id = ? AND status = "reserved"');
+            $soldStmt->execute([$reservedAccount['id']]);
+
+            if ($soldStmt->rowCount() !== 1) {
+                $pdo->rollBack();
+                json_error('Gagal mengirim akun premium', null, 422);
+            }
+
+            $updateOrder = $pdo->prepare('UPDATE orders SET status = "delivered", delivery_note = ? WHERE id = ?');
+            $updateOrder->execute([$reservedAccount['account_data'], (int) $confirmation['order_id']]);
+        } else {
+            $updateOrder = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
+            $updateOrder->execute([$orderStatus, (int) $confirmation['order_id']]);
+        }
+
         $pdo->commit();
 
         json_success('Verifikasi pembayaran berhasil diproses', ['order_id' => (int) $confirmation['order_id'], 'status' => $orderStatus]);

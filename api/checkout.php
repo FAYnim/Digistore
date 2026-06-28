@@ -29,7 +29,7 @@ $customerPhone = trim($body['customer_phone'] ?? '');
 $note = trim($body['note'] ?? '');
 
 if ($productId <= 0) json_error('Produk wajib dipilih.', null, 422);
-if ($quantity < 1) json_error('Jumlah minimal 1.', null, 422);
+if ($quantity !== 1) json_error('Jumlah akun harus 1.', null, 422);
 if ($customerName === '') json_error('Nama wajib diisi.', null, 422);
 if ($customerPhone === '') json_error('WhatsApp wajib diisi.', null, 422);
 if ($customerEmail !== '' && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) json_error('Email tidak valid.', null, 422);
@@ -40,25 +40,26 @@ try {
 
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare('SELECT id, name, price, stock, status FROM products WHERE id = ? FOR UPDATE');
+    $stmt = $pdo->prepare('SELECT id, name, price, status FROM products WHERE id = ? FOR UPDATE');
     $stmt->execute([$productId]);
     $product = $stmt->fetch();
 
-    if (!$product || $product['status'] !== 'active' || (int) $product['stock'] < $quantity) {
+    if (!$product || $product['status'] !== 'active') {
         $pdo->rollBack();
         json_error('Produk tidak tersedia atau stok tidak cukup', null, 422);
     }
 
+    $account_stmt = $pdo->prepare('SELECT id FROM product_accounts WHERE product_id = ? AND status = "available" ORDER BY id ASC LIMIT 1 FOR UPDATE');
+    $account_stmt->execute([$product['id']]);
+    $account = $account_stmt->fetch();
+
+    if (!$account) {
+        $pdo->rollBack();
+        json_error('Stok akun tidak tersedia', null, 422);
+    }
+
     $price = (int) $product['price'];
     $subtotal = $price * $quantity;
-
-    $stock = $pdo->prepare("UPDATE products SET stock = stock - ?, status = IF(stock - ? <= 0, 'out_of_stock', status) WHERE id = ? AND status = 'active' AND stock >= ?");
-    $stock->execute([$quantity, $quantity, $productId, $quantity]);
-
-    if ($stock->rowCount() !== 1) {
-        $pdo->rollBack();
-        json_error('Stok produk tidak cukup', null, 422);
-    }
 
     $order = $pdo->prepare('INSERT INTO orders (order_code, customer_name, customer_email, customer_phone, total_amount, payment_method, payment_deadline, status, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $order->execute([
@@ -74,6 +75,14 @@ try {
     ]);
 
     $orderId = (int) $pdo->lastInsertId();
+
+    $reserve_stmt = $pdo->prepare('UPDATE product_accounts SET status = "reserved", order_id = ? WHERE id = ? AND status = "available"');
+    $reserve_stmt->execute([$orderId, $account['id']]);
+
+    if ($reserve_stmt->rowCount() !== 1) {
+        throw new Exception('Gagal mengalokasikan akun');
+    }
+
     $item = $pdo->prepare('INSERT INTO order_items (order_id, product_id, product_name, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?, ?)');
     $item->execute([$orderId, $productId, $product['name'], $quantity, $price, $subtotal]);
 

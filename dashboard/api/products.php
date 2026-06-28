@@ -32,9 +32,6 @@ function validate_product_payload(array $body, bool $partial = false): array
     if (!$partial || array_key_exists('price', $body)) {
         if (!isset($body['price']) || !is_numeric($body['price']) || (int) $body['price'] < 0) $errors[] = 'price wajib angka positif';
     }
-    if (!$partial || array_key_exists('stock', $body)) {
-        if (!isset($body['stock']) || !is_numeric($body['stock']) || (int) $body['stock'] < 0) $errors[] = 'stock wajib angka positif';
-    }
     if (array_key_exists('original_price', $body) && $body['original_price'] !== null && $body['original_price'] !== '' && (!is_numeric($body['original_price']) || (int) $body['original_price'] < 0)) $errors[] = 'original_price wajib angka positif';
     if (array_key_exists('status', $body) && !in_array($body['status'], $status, true)) $errors[] = 'status hanya boleh: active, draft, out_of_stock';
     if (array_key_exists('image_url', $body) && trim((string) $body['image_url']) !== '') {
@@ -87,28 +84,78 @@ function generate_product_slug(PDO $pdo): string
     return $slug;
 }
 
+function parse_accounts_text(string $text): array
+{
+    $normalized = str_replace(["\r\n", "\r"], "\n", trim($text));
+    if ($normalized === '') {
+        return [];
+    }
+
+    $chunks = preg_split('/\n\s*\n|\n/', $normalized);
+    $accounts = [];
+
+    foreach ($chunks as $chunk) {
+        $account = trim($chunk);
+        if ($account !== '') {
+            $accounts[] = $account;
+        }
+    }
+
+    return $accounts;
+}
+
+function insert_product_accounts(PDO $pdo, int $product_id, array $accounts): void
+{
+    if (empty($accounts)) {
+        return;
+    }
+
+    $stmt = $pdo->prepare('INSERT INTO product_accounts (product_id, account_data, status) VALUES (?, ?, "available")');
+    foreach ($accounts as $account) {
+        $stmt->execute([$product_id, $account]);
+    }
+}
+
+function product_select_sql(): string
+{
+    return 'SELECT p.*, COALESCE(account_counts.available_stock, 0) AS stock, c.name AS category_name
+            FROM products p
+            LEFT JOIN categories c ON c.id = p.category_id
+            LEFT JOIN (
+                SELECT product_id, COUNT(*) AS available_stock
+                FROM product_accounts
+                WHERE status = "available"
+                GROUP BY product_id
+            ) account_counts ON account_counts.product_id = p.id';
+}
+
+function cast_product_row(array &$row): void
+{
+    $row['is_featured'] = (bool) $row['is_featured'];
+    $row['price']          = (int) $row['price'];
+    $row['original_price'] = $row['original_price'] !== null ? (int) $row['original_price'] : null;
+    $row['stock']          = (int) $row['stock'];
+    $row['sold_count']     = (int) $row['sold_count'];
+    $row['rating']         = (float) $row['rating'];
+}
+
 switch ($method) {
 
-    // ----------------------------------------------------------------
-    // GET — list atau detail
-    // ----------------------------------------------------------------
     case 'GET':
         if ($id) {
-            // Detail satu produk + nama kategori
-            $stmt = $pdo->prepare(
-                'SELECT p.*, c.name AS category_name
-                 FROM products p
-                 LEFT JOIN categories c ON c.id = p.category_id
-                 WHERE p.id = ?'
-            );
+            $stmt = $pdo->prepare(product_select_sql() . ' WHERE p.id = ?');
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) json_error('Produk tidak ditemukan', null, 404);
-            $row['is_featured'] = (bool) $row['is_featured'];
+            cast_product_row($row);
+
+            $account_stmt = $pdo->prepare('SELECT id, account_data, status, order_id, sold_at, created_at FROM product_accounts WHERE product_id = ? ORDER BY id DESC');
+            $account_stmt->execute([$id]);
+            $row['accounts'] = $account_stmt->fetchAll();
+
             json_success('Produk berhasil dimuat', $row);
         }
 
-        // List produk dengan filter opsional
         $conditions = [];
         $params     = [];
 
@@ -130,34 +177,21 @@ switch ($method) {
             }
         }
 
-        $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        $sql   = "SELECT p.*, c.name AS category_name
-                  FROM products p
-                  LEFT JOIN categories c ON c.id = p.category_id
-                  $where
-                  ORDER BY p.created_at DESC";
+        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $sql   = product_select_sql() . $where . ' ORDER BY p.created_at DESC';
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
-        // Cast types
         foreach ($rows as &$row) {
-            $row['is_featured'] = (bool) $row['is_featured'];
-            $row['price']          = (int) $row['price'];
-            $row['original_price'] = $row['original_price'] !== null ? (int) $row['original_price'] : null;
-            $row['stock']          = (int) $row['stock'];
-            $row['sold_count']     = (int) $row['sold_count'];
-            $row['rating']         = (float) $row['rating'];
+            cast_product_row($row);
         }
         unset($row);
 
         json_success('Produk berhasil dimuat', $rows);
         break;
 
-    // ----------------------------------------------------------------
-    // POST — tambah produk
-    // ----------------------------------------------------------------
     case 'POST':
         $body   = json_body();
         $errors = validate_product_payload($body);
@@ -168,8 +202,8 @@ switch ($method) {
 
         $stmt = $pdo->prepare(
             'INSERT INTO products
-               (category_id, name, slug, description, price, original_price, stock, image_url, status, is_featured)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+               (category_id, name, slug, description, price, original_price, image_url, status, is_featured)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
             $catId,
@@ -178,30 +212,25 @@ switch ($method) {
             $body['description']    ?? null,
             (int)   $body['price'],
             isset($body['original_price']) ? (int) $body['original_price'] : null,
-            (int)   $body['stock'],
             $body['image_url']      ?? null,
             $body['status']         ?? 'draft',
             !empty($body['is_featured']) ? 1 : 0,
         ]);
 
         $newId = (int) $pdo->lastInsertId();
-        $stmt2 = $pdo->prepare(
-            'SELECT p.*, c.name AS category_name FROM products p
-             LEFT JOIN categories c ON c.id = p.category_id WHERE p.id = ?'
-        );
+        $accounts = parse_accounts_text((string)($body['accounts_text'] ?? ''));
+        insert_product_accounts($pdo, $newId, $accounts);
+
+        $stmt2 = $pdo->prepare(product_select_sql() . ' WHERE p.id = ?');
         $stmt2->execute([$newId]);
         $created = $stmt2->fetch();
-        $created['is_featured'] = (bool) $created['is_featured'];
+        cast_product_row($created);
         json_success('Produk berhasil ditambahkan', $created, 201);
         break;
 
-    // ----------------------------------------------------------------
-    // PUT — edit produk
-    // ----------------------------------------------------------------
     case 'PUT':
         if (!$id) json_error('ID produk diperlukan', null, 400);
 
-        // Ambil data lama
         $old = $pdo->prepare('SELECT * FROM products WHERE id = ?');
         $old->execute([$id]);
         $current = $old->fetch();
@@ -218,7 +247,7 @@ switch ($method) {
         $stmt = $pdo->prepare(
             'UPDATE products SET
                category_id=?, name=?, slug=?, description=?, price=?, original_price=?,
-               stock=?, image_url=?, status=?, is_featured=?
+               image_url=?, status=?, is_featured=?
              WHERE id=?'
         );
         $stmt->execute([
@@ -230,26 +259,22 @@ switch ($method) {
             array_key_exists('original_price', $body)
                 ? (!empty($body['original_price']) ? (int) $body['original_price'] : null)
                 : $current['original_price'],
-            isset($body['stock'])          ? (int) $body['stock']          : (int) $current['stock'],
             array_key_exists('image_url', $body) ? $body['image_url']     : $current['image_url'],
             $body['status']     ?? $current['status'],
             isset($body['is_featured'])    ? ($body['is_featured'] ? 1 : 0) : (int) $current['is_featured'],
             $id,
         ]);
 
-        $updated = $pdo->prepare(
-            'SELECT p.*, c.name AS category_name FROM products p
-             LEFT JOIN categories c ON c.id = p.category_id WHERE p.id = ?'
-        );
+        $accounts = parse_accounts_text((string)($body['accounts_text'] ?? ''));
+        insert_product_accounts($pdo, $id, $accounts);
+
+        $updated = $pdo->prepare(product_select_sql() . ' WHERE p.id = ?');
         $updated->execute([$id]);
         $result = $updated->fetch();
-        $result['is_featured'] = (bool) $result['is_featured'];
+        cast_product_row($result);
         json_success('Produk berhasil diperbarui', $result);
         break;
 
-    // ----------------------------------------------------------------
-    // DELETE — hapus produk
-    // ----------------------------------------------------------------
     case 'DELETE':
         if (!$id) json_error('ID produk diperlukan', null, 400);
 

@@ -53,7 +53,7 @@ $sql = "SELECT
           p.description,
           p.price,
           p.original_price,
-          p.stock,
+          COALESCE(account_counts.available_stock, 0) AS stock,
           p.image_url,
           p.status,
           p.is_featured,
@@ -62,6 +62,12 @@ $sql = "SELECT
           p.created_at
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN (
+            SELECT product_id, COUNT(*) AS available_stock
+            FROM product_accounts
+            WHERE status = 'available'
+            GROUP BY product_id
+        ) account_counts ON account_counts.product_id = p.id
         WHERE $where
         ORDER BY $orderBy";
 
