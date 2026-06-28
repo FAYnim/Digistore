@@ -75,6 +75,18 @@
       document.querySelector("#message").classList.remove("hidden");
     }
 
+    function showToast(message, type = "success") {
+      const colors = { success: "#16a34a", error: "#dc2626", info: "#2563eb" };
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.style.cssText = `position:fixed; bottom:24px; right:24px; z-index:9999; padding:12px 20px; border-radius:12px; font-weight:700; font-size:14px; color:#fff; background:${colors[type] ?? colors.info}; box-shadow:0 4px 20px rgba(0,0,0,.25); animation: fadeInUp .25s ease;`;
+      if (!document.querySelector("#toastAnimStyle")) {
+        document.head.insertAdjacentHTML("beforeend", `<style id="toastAnimStyle">@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}</style>`);
+      }
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
     function updateThemeIcon() {
       const isDark = document.documentElement.classList.contains("dark");
       document.querySelector("#themeToggle").innerHTML = isDark ? '<i class="fa-regular fa-sun"></i>' : '<i class="fa-regular fa-moon"></i>';
@@ -172,13 +184,14 @@
           const res = await fetch("api/payment-confirmations.php", { method: "POST", body: new FormData(form) });
           const json = await res.json();
           if (!json.success) throw new Error(json.message || "Gagal mengirim konfirmasi.");
-          document.querySelector("#message").textContent = json.message;
-          document.querySelector("#message").classList.remove("hidden", "text-[var(--danger)]");
-          document.querySelector("#message").classList.add("text-emerald-700");
+          showToast(json.message || "Konfirmasi berhasil dikirim.", "success");
           form.reset();
+          button.textContent = "Mengalihkan...";
+          setTimeout(() => {
+            window.location.href = `order-status.php?code=${encodeURIComponent(form.dataset.orderCode)}`;
+          }, 2000);
         } catch (error) {
-          showMessage(error.message || "Gagal mengirim konfirmasi.");
-        } finally {
+          showToast(error.message || "Gagal mengirim konfirmasi.", "error");
           button.disabled = false;
           button.textContent = "Kirim Konfirmasi";
         }
@@ -243,7 +256,7 @@
         ${allowPayment && hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="dashboard/${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
         ${allowPayment && hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
         ${allowPayment && hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
-        ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm">
+        ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm" data-order-code="${escapeText(order.order_code)}">
           <input type="hidden" name="order_code" value="${escapeText(order.order_code)}">
           <label class="field-label">Nama Pengirim
             <input class="control mt-2" name="sender_name" required maxlength="100" placeholder="Nama pemilik rekening/e-wallet">
