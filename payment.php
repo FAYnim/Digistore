@@ -186,9 +186,12 @@
           if (!json.success) throw new Error(json.message || "Gagal mengirim konfirmasi.");
           showToast(json.message || "Konfirmasi berhasil dikirim.", "success");
           form.reset();
+          button.textContent = "Mengalihkan...";
+          setTimeout(() => {
+            window.location.href = `order-status.php?code=${encodeURIComponent(form.dataset.orderCode)}`;
+          }, 2000);
         } catch (error) {
           showToast(error.message || "Gagal mengirim konfirmasi.", "error");
-        } finally {
           button.disabled = false;
           button.textContent = "Kirim Konfirmasi";
         }
@@ -253,7 +256,7 @@
         ${allowPayment && hasMethod && payment.qris_enabled ? `<img class="mx-auto mt-5 h-72 w-72 rounded-3xl object-cover" src="dashboard/${escapeText(payment.qris_image)}" alt="QRIS">` : ""}
         ${allowPayment && hasMethod && payment.bank_enabled ? `<div class="mt-5 rounded-2xl border border-[var(--border)] p-4 text-left text-sm text-[var(--muted)]"><p><b>Bank:</b> ${escapeText(payment.bank_name)}</p><p><b>No. Rekening:</b> ${escapeText(payment.bank_account)}</p><p><b>Nama:</b> ${escapeText(payment.bank_holder)}</p></div>` : ""}
         ${allowPayment && hasMethod ? `<p class="mt-5 text-left text-sm text-[var(--muted)]">${escapeText(instructionText)}</p>` : ""}
-        ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm">
+        ${allowPayment ? `<form class="payment-confirm-form mt-6 text-left" id="paymentConfirmationForm" data-order-code="${escapeText(order.order_code)}">
           <input type="hidden" name="order_code" value="${escapeText(order.order_code)}">
           <label class="field-label">Nama Pengirim
             <input class="control mt-2" name="sender_name" required maxlength="100" placeholder="Nama pemilik rekening/e-wallet">
