@@ -92,7 +92,65 @@
     }
 
     function canSubmitPayment(order) {
-      return ["pending", "pending_payment"].includes(order.status);
+      if (!["pending", "pending_payment"].includes(order.status)) return false;
+      if (!order.payment_deadline) return true;
+      return new Date(order.payment_deadline) > new Date();
+    }
+
+    function isPendingWithDeadline(order) {
+      return ["pending", "pending_payment"].includes(order.status) && order.payment_deadline;
+    }
+
+    function formatCountdown(seconds) {
+      if (seconds <= 0) return null;
+      const d = Math.floor(seconds / 86400);
+      const h = Math.floor((seconds % 86400) / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      const pad = (n) => String(n).padStart(2, "0");
+      if (d > 0) return `${d}h ${pad(h)}:${pad(m)}:${pad(s)}`;
+      if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+      return `${pad(m)}:${pad(s)}`;
+    }
+
+    function startCountdown(deadline, onExpired) {
+      const el = document.querySelector("#countdownTimer");
+      if (!el) return;
+      function tick() {
+        const now = Date.now();
+        const target = new Date(deadline).getTime();
+        const diff = Math.floor((target - now) / 1000);
+        const formatted = formatCountdown(diff);
+        if (formatted) {
+          el.textContent = formatted;
+          el.className = diff <= 300 ? "rounded-xl bg-red-600 px-4 py-2 font-mono text-lg font-extrabold text-white" : "rounded-xl bg-[var(--surface)] px-4 py-2 font-mono text-lg font-extrabold text-[var(--text)] ring-2 ring-[var(--border)]";
+          if (diff <= 60) el.className = "rounded-xl bg-red-600 px-4 py-2 font-mono text-lg font-extrabold text-white animate-pulse";
+          setTimeout(tick, 1000);
+        } else {
+          el.textContent = "00:00";
+          el.className = "rounded-xl bg-red-600 px-4 py-2 font-mono text-lg font-extrabold text-white animate-pulse";
+          if (onExpired) onExpired();
+        }
+      }
+      tick();
+    }
+
+    function refreshOrderAndCheckExpired() {
+      apiGet(`/orders.php?code=${encodeURIComponent(code)}`).then((res) => {
+        if (res.success) {
+          const order = res.data;
+          if (["expired", "cancelled"].includes(order.status)) {
+            document.querySelector("#paymentSubtitle").textContent = "Waktu pembayaran sudah habis.";
+            document.querySelector("#paymentCard").innerHTML = `
+              <h2 class="font-display text-2xl font-extrabold">Pembayaran</h2>
+              <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800 dark:bg-red-950/30 dark:text-red-200">Waktu pembayaran sudah habis. Order ini expired. Silakan buat pesanan baru.</div>
+              <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
+              </div>
+            `;
+          }
+        }
+      }).catch(() => {});
     }
 
     function paymentStatusNotice(order) {
@@ -130,6 +188,32 @@
       });
     }
 
+    function renderOrderDetail(order, itemNames) {
+      const hasDeadline = isPendingWithDeadline(order);
+      const deadlineLabel = hasDeadline
+        ? `<div class="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+            <p class="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Batas Pembayaran</p>
+            <p id="countdownTimer" class="mt-1 font-mono text-lg font-extrabold">--:--</p>
+            <p class="mt-1 text-xs text-[var(--muted)]">${escapeText(order.payment_deadline)}</p>
+           </div>`
+        : "";
+      document.querySelector("#orderDetail").innerHTML = `
+        <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
+        ${deadlineLabel}
+        <div class="mt-5 grid gap-3 text-sm text-[var(--muted)]">
+          <p><b>Kode Order:</b> ${escapeText(order.order_code)}</p>
+          <p><b>Produk:</b> ${itemNames}</p>
+          <p><b>Status:</b> ${escapeText(statusLabels[order.status] || order.status)}</p>
+          <p><b>Total:</b> ${rupiah.format(Number(order.total_amount || 0))}</p>
+        </div>
+      `;
+      if (hasDeadline) {
+        startCountdown(order.payment_deadline, () => {
+          refreshOrderAndCheckExpired();
+        });
+      }
+    }
+
     async function loadOrder() {
       if (!code) return showMessage("Order tidak ditemukan.");
 
@@ -148,15 +232,7 @@
       const instructionText = payment.instruction === "Scan QRIS, bayar sesuai total, lalu konfirmasi ke admin." ? actionText : (payment.instruction || actionText);
       document.querySelector("#paymentSubtitle").textContent = actionText;
 
-      document.querySelector("#orderDetail").innerHTML = `
-        <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
-        <div class="mt-5 grid gap-3 text-sm text-[var(--muted)]">
-          <p><b>Kode Order:</b> ${escapeText(order.order_code)}</p>
-          <p><b>Produk:</b> ${itemNames}</p>
-          <p><b>Status:</b> ${escapeText(statusLabels[order.status] || order.status)}</p>
-          <p><b>Total:</b> ${rupiah.format(Number(order.total_amount || 0))}</p>
-        </div>
-      `;
+      renderOrderDetail(order, itemNames);
 
       const allowPayment = canSubmitPayment(order);
       const notice = paymentStatusNotice(order);
@@ -194,7 +270,7 @@
           <button class="primary-btn w-full text-center" type="submit">Kirim Konfirmasi</button>
         </form>` : ""}
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
-          ${hasWhatsapp ? `<a class="small-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
+          ${hasWhatsapp && allowPayment ? `<a class="small-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
           <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
           <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
         </div>

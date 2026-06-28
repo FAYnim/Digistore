@@ -4,7 +4,45 @@ const statusStyles = { pending: "bg-yellow-100 text-yellow-800", pending_payment
 const code = new URLSearchParams(window.location.search).get("code");
 
 function escapeText(value) {
-  return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+  return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&", "<": "<", ">": ">", "'": "'", '"': """ }[char]));
+}
+
+function isPendingWithDeadline(order) {
+  return ["pending", "pending_payment"].includes(order.status) && order.payment_deadline;
+}
+
+function formatCountdown(seconds) {
+  if (seconds <= 0) return null;
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  if (d > 0) return `${d}h ${pad(h)}:${pad(m)}:${pad(s)}`;
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${pad(m)}:${pad(s)}`;
+}
+
+function startCountdown(deadline, orderCode) {
+  const el = document.querySelector("#statusCountdownTimer");
+  if (!el) return;
+  function tick() {
+    const now = Date.now();
+    const target = new Date(deadline).getTime();
+    const diff = Math.floor((target - now) / 1000);
+    const formatted = formatCountdown(diff);
+    if (formatted) {
+      el.textContent = formatted;
+      el.className = diff <= 300 ? "font-mono text-2xl font-extrabold text-red-600" : "font-mono text-2xl font-extrabold text-[var(--text)]";
+      if (diff <= 60) el.className = "font-mono text-2xl font-extrabold text-red-600 animate-pulse";
+      setTimeout(tick, 1000);
+    } else {
+      el.textContent = "00:00";
+      el.className = "font-mono text-2xl font-extrabold text-red-600 animate-pulse";
+      loadStatus(orderCode);
+    }
+  }
+  tick();
 }
 
 function showMessage(message) {
@@ -114,10 +152,19 @@ function renderDeliveryNote(order) {
 
 function renderOrder(order) {
   const statusClass = statusStyles[order.status] || "bg-slate-100 text-slate-700";
+  const hasDeadline = isPendingWithDeadline(order);
+  const deadlineSection = hasDeadline
+    ? `<div class="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
+        <p class="text-xs font-bold uppercase tracking-wider text-[var(--muted)]">Batas Pembayaran</p>
+        <p id="statusCountdownTimer" class="mt-1 font-mono text-2xl font-extrabold">--:--</p>
+        <p class="mt-1 text-xs text-[var(--muted)]">${escapeText(order.payment_deadline)}</p>
+       </div>`
+    : "";
   document.querySelector("#statusResult").innerHTML = `
     <div class="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.4fr_.9fr]">
       <section class="modal-card">
         <h2 class="font-display text-2xl font-extrabold">Detail Pesanan</h2>
+        ${deadlineSection}
         <div class="mt-5 grid gap-3 text-sm text-[var(--muted)]">
           <p><b>Kode Order:</b> ${escapeText(order.order_code)}</p>
           <p><b>Nama:</b> ${escapeText(order.customer_name)}</p>
@@ -151,6 +198,9 @@ function renderOrder(order) {
       ${renderDeliveryNote(order)}
     </div>
   `;
+  if (hasDeadline) {
+    startCountdown(order.payment_deadline, order.order_code);
+  }
 }
 
 async function loadStatus(orderCode) {
