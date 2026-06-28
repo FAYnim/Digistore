@@ -36,7 +36,7 @@ if ($customerEmail !== '' && !filter_var($customerEmail, FILTER_VALIDATE_EMAIL))
 
 try {
     $orderCode = generate_order_code($pdo);
-    $deadline = date('Y-m-d 23:59:00', strtotime('+1 day'));
+    $deadline = date('Y-m-d H:i:s', strtotime('+2 hour'));
 
     $pdo->beginTransaction();
 

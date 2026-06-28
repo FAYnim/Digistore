@@ -31,6 +31,9 @@ try {
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]
     );
+    $phpTz = date_default_timezone_get() ?: 'UTC';
+    $offset = (new DateTime('now', new DateTimeZone($phpTz)))->format('P');
+    $pdo->exec("SET time_zone = '" . $offset . "'");
 } catch (PDOException $e) {
     error_log('Database connection failed: ' . $e->getMessage());
 
