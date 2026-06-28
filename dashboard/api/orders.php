@@ -129,8 +129,11 @@ switch ($method) {
 
         if (!$confirmation) json_error('Konfirmasi pembayaran tidak ditemukan', null, 404);
         if ($confirmation['verification_status'] !== 'pending') json_error('Konfirmasi ini sudah diverifikasi', null, 422);
-        if ($confirmation['status'] === 'expired') json_error('Pesanan sudah expired', null, 422);
-        if (!in_array($confirmation['status'], ['pending_verify', 'pending_payment'], true)) json_error('Pesanan tidak menunggu verifikasi pembayaran', null, 422);
+        $orderStatusForVerification = $confirmation['status'];
+        if (in_array($orderStatusForVerification, ['paid', 'processing', 'delivered'], true)) $orderStatusForVerification = 'pending_verify';
+        if ($orderStatusForVerification === 'pending') $orderStatusForVerification = 'pending_payment';
+        if ($orderStatusForVerification === 'expired') json_error('Pesanan sudah expired', null, 422);
+        if (!in_array($orderStatusForVerification, ['pending_verify', 'pending_payment'], true)) json_error('Pesanan tidak menunggu verifikasi pembayaran', null, 422);
 
         $verificationStatus = $action === 'accept' ? 'accepted' : 'rejected';
         $orderStatus = $action === 'accept' ? 'completed' : 'cancelled';

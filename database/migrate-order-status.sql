@@ -9,7 +9,7 @@ END;
 UPDATE orders o
 JOIN payment_confirmations pc ON pc.order_id = o.id AND pc.verification_status = 'pending'
 SET o.status = 'pending_verify'
-WHERE o.status = 'pending_payment';
+WHERE o.status IN ('pending_payment', 'completed');
 
 ALTER TABLE orders
   MODIFY status ENUM('pending_payment', 'pending_verify', 'completed', 'expired', 'cancelled') DEFAULT 'pending_payment';
