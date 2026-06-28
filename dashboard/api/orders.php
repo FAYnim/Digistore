@@ -9,6 +9,7 @@
 require_once __DIR__ . '/../auth/check-auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../auth/csrf.php';
+require_once __DIR__ . '/../../includes/order-expiration.php';
 
 $method = strtoupper($_SERVER['REQUEST_METHOD']);
 $id     = isset($_GET['id']) ? (int) $_GET['id'] : null;
@@ -31,6 +32,8 @@ switch ($method) {
     // GET — list atau detail
     // ----------------------------------------------------------------
     case 'GET':
+        expire_pending_orders($pdo, $id ?: null);
+
         if ($id) {
             // Detail pesanan + items
             $stmt = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
@@ -94,6 +97,10 @@ switch ($method) {
     // POST — verifikasi pembayaran
     // ----------------------------------------------------------------
     case 'POST':
+        if (($_GET['action'] ?? '') === 'expire_orders') {
+            json_success('Expired order berhasil diproses', expire_pending_orders($pdo));
+        }
+
         if (($_GET['action'] ?? '') === 'complete_order') {
             $body = json_body();
             $orderId = (int) ($body['order_id'] ?? 0);
@@ -126,7 +133,16 @@ switch ($method) {
         $stmt->execute([$confirmationId]);
         $confirmation = $stmt->fetch();
         if (!$confirmation) json_error('Konfirmasi pembayaran tidak ditemukan', null, 404);
+
+        expire_pending_orders($pdo, (int) $confirmation['order_id']);
+
+        $stmt->execute([$confirmationId]);
+        $confirmation = $stmt->fetch();
+
+        if (!$confirmation) json_error('Konfirmasi pembayaran tidak ditemukan', null, 404);
         if ($confirmation['verification_status'] !== 'pending') json_error('Konfirmasi ini sudah diverifikasi', null, 422);
+        if ($confirmation['status'] === 'expired') json_error('Pesanan sudah expired', null, 422);
+        if (!in_array($confirmation['status'], ['pending', 'pending_payment'], true)) json_error('Pesanan tidak menunggu pembayaran', null, 422);
 
         $verificationStatus = $action === 'accept' ? 'accepted' : 'rejected';
         $orderStatus = $action === 'accept' ? 'delivered' : 'pending_payment';

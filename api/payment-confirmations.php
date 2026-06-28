@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/rate-limit.php';
+require_once __DIR__ . '/../includes/order-expiration.php';
 
 require_method('POST');
 rate_limit('payment-confirmation:' . rate_limit_identifier(), 10, 300);
@@ -34,6 +35,14 @@ try {
     $order = $stmt->fetch();
 
     if (!$order) json_error('Order tidak ditemukan.', null, 404);
+
+    expire_pending_orders($pdo, (int) $order['id']);
+
+    $stmt->execute([$orderCode]);
+    $order = $stmt->fetch();
+
+    if (!$order) json_error('Order tidak ditemukan.', null, 404);
+    if ($order['status'] === 'expired') json_error('Order ini sudah expired.', null, 422);
     if (!in_array($order['status'], ['pending', 'pending_payment'], true)) json_error('Order ini tidak menunggu pembayaran.', null, 422);
 
     $uploadDir = dirname(__DIR__) . '/uploads/payment-proofs';

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/rate-limit.php';
+require_once __DIR__ . '/../includes/order-expiration.php';
 
 require_method('GET');
 rate_limit('order-lookup:' . rate_limit_identifier(), 30, 300);
@@ -16,6 +17,12 @@ try {
     $order = $stmt->fetch();
 
     if (!$order) json_error('Order tidak ditemukan.', null, 404);
+
+    expire_pending_orders($pdo, (int) $order['id']);
+
+    $stmt->execute([$code]);
+    $order = $stmt->fetch();
+
     if ($order['status'] === 'pending') $order['status'] = 'pending_payment';
 
     $items = $pdo->prepare('SELECT product_name, quantity, price, subtotal FROM order_items WHERE order_id = ?');
