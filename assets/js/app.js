@@ -5,7 +5,7 @@ const state = {
   products: [],
   featured: [],
   categories: [],
-  testimonials: [],
+  // testimonials: [], // disembunyikan sementara
   settings: {},
 };
 const fallbackImage = "https://placehold.co/600x400?text=No+Image";
@@ -101,18 +101,19 @@ function renderFeatured() {
   $("#featuredGrid").innerHTML = state.featured.map(productCard).join("") || '<div class="empty-state lg:col-span-4"><h3>Produk unggulan belum tersedia.</h3></div>';
 }
 
-function renderTestimonials() {
-  $("#testimonialGrid").innerHTML = state.testimonials.map((item) => {
-    const stars = Array.from({ length: 5 }, (_, i) => i < Number(item.rating || 0) ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>').join("");
-    return `
-    <article class="testimonial-card">
-      <div class="text-[var(--warning)]">${stars}</div>
-      <p>${escapeText(item.message)}</p>
-      <b class="mt-5 block">${escapeText(item.name)}</b>
-      <span class="text-sm font-bold text-[var(--muted)]">${escapeText(item.role || "Pelanggan")}</span>
-    </article>`;
-  }).join("") || '<div class="empty-state lg:col-span-3"><h3>Testimoni belum tersedia.</h3></div>';
-}
+// Testimoni disembunyikan sementara
+// function renderTestimonials() {
+//   $("#testimonialGrid").innerHTML = state.testimonials.map((item) => {
+//     const stars = Array.from({ length: 5 }, (_, i) => i < Number(item.rating || 0) ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>').join("");
+//     return `
+//     <article class="testimonial-card">
+//       <div class="text-[var(--warning)]">${stars}</div>
+//       <p>${escapeText(item.message)}</p>
+//       <b class="mt-5 block">${escapeText(item.name)}</b>
+//       <span class="text-sm font-bold text-[var(--muted)]">${escapeText(item.role || "Pelanggan")}</span>
+//     </article>`;
+//   }).join("") || '<div class="empty-state lg:col-span-3"><h3>Testimoni belum tersedia.</h3></div>';
+// }
 
 function renderSettings() {
   const settings = state.settings;
@@ -132,7 +133,7 @@ function renderSettings() {
 function setLoading() {
   $("#productGrid").innerHTML = '<div class="empty-state xl:col-span-4"><h3>Memuat produk...</h3></div>';
   $("#featuredGrid").innerHTML = '<div class="empty-state lg:col-span-4"><h3>Memuat produk unggulan...</h3></div>';
-  $("#testimonialGrid").innerHTML = '<div class="empty-state lg:col-span-3"><h3>Memuat testimoni...</h3></div>';
+  // $("#testimonialGrid").innerHTML = '<div class="empty-state lg:col-span-3"><h3>Memuat testimoni...</h3></div>'; // disembunyikan sementara
 }
 
 function setError() {
@@ -177,15 +178,15 @@ function initNavSpy() {
 
 async function loadLandingData() {
   setLoading();
-  const [settings, categories, products, featured, testimonials] = await Promise.all([
+  const [settings, categories, products, featured] = await Promise.all([
     apiGet("/settings.php"),
     apiGet("/categories.php"),
     apiGet("/products.php"),
     apiGet("/products.php?featured=true&limit=4"),
-    apiGet("/testimonials.php?limit=3"),
+    // apiGet("/testimonials.php?limit=3"), // disembunyikan sementara
   ]);
 
-  if (![settings, categories, products, featured, testimonials].every((res) => res.success)) {
+  if (![settings, categories, products, featured].every((res) => res.success)) {
     setError();
     return;
   }
@@ -194,14 +195,14 @@ async function loadLandingData() {
   state.categories = categories.data || [];
   state.products = (products.data || []).map(normalizeProduct);
   state.featured = (featured.data || []).map(normalizeProduct);
-  state.testimonials = testimonials.data || [];
+  // state.testimonials = testimonials.data || []; // disembunyikan sementara
 
   renderSettings();
   applyTheme(state.settings.default_theme);
   renderCategories();
   renderFeatured();
   renderProducts();
-  renderTestimonials();
+  // renderTestimonials(); // disembunyikan sementara
 }
 
 $("#themeToggle").addEventListener("click", () => {

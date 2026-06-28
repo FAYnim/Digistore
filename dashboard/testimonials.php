@@ -1,4 +1,7 @@
 <?php
+// Testimoni disembunyikan sementara — redirect ke overview
+header('Location: index.php');
+exit;
 $pageTitle = 'Testimoni';
 $activePage = 'testimonials';
 require __DIR__ . '/components/layout.php';

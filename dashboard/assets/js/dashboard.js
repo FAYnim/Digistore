@@ -745,88 +745,88 @@ function initOrders() {
 }
 
 /* ----------------------------------------------------------------
- * Testimonials (testimonials.php)
+ * Testimonials (testimonials.php) — disembunyikan sementara
  * --------------------------------------------------------------- */
-async function renderTestimonials() {
-  const res = await api.get('/dashboard/api/testimonials.php');
-  if (!res.success) { showToast(res.message, 'error'); return; }
-
-  $('#testimonialsTable').innerHTML = res.data.map((t) =>
-    `<tr>
-       <td class="font-black">${t.name}</td>
-       <td>${t.role || '—'}</td>
-       <td>${'<i class="fa-solid fa-star text-yellow-400"></i>'.repeat(t.rating)}</td>
-       <td class="max-w-[200px] truncate">${t.message}</td>
-       <td>${badge(t.status)}</td>
-       <td>
-         <div class="flex gap-2">
-           <button class="btn-soft" onclick="editTestimonial(${t.id})"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
-           <button class="btn-soft" onclick="askDeleteTestimonial(${t.id}, '${t.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash mr-1"></i>Hapus</button>
-         </div>
-       </td>
-     </tr>`
-  ).join('') || '<tr><td colspan="6" class="text-center text-slate-400">Belum ada testimoni.</td></tr>';
-}
-
-window.editTestimonial = async (id) => {
-  const res = await api.get(`/dashboard/api/testimonials.php?id=${id}`);
-  if (!res.success) { showToast(res.message, 'error'); return; }
-  const t = res.data;
-  $('#testimonialModalTitle').textContent = 'Edit Testimoni';
-  $('#testimonialId').value      = t.id;
-  $('#testimonialName').value    = t.name;
-  $('#testimonialRole').value    = t.role || '';
-  $('#testimonialRating').value  = t.rating;
-  $('#testimonialMessage').value = t.message;
-  $('#testimonialStatus').value  = t.status;
-  openModal('#testimonialModal');
-};
-
-let _deleteTestimonialId = null;
-window.askDeleteTestimonial = (id, name) => {
-  _deleteTestimonialId = id;
-  $('#deleteTestimonialModalName').textContent = name;
-  openModal('#deleteTestimonialModal');
-};
-
-function initTestimonials() {
-  renderTestimonials();
-  $('#addTestimonialBtn')?.addEventListener('click', () => {
-    $('#testimonialForm').reset();
-    $('#testimonialId').value = '';
-    $('#testimonialModalTitle').textContent = 'Tambah Testimoni';
-    openModal('#testimonialModal');
-  });
-
-  $('#testimonialForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = $('#testimonialId').value;
-    const payload = {
-      name:    $('#testimonialName').value,
-      role:    $('#testimonialRole').value || null,
-      rating:  parseInt($('#testimonialRating').value),
-      message: $('#testimonialMessage').value,
-      status:  $('#testimonialStatus').value,
-    };
-    const res = id
-      ? await api.put(`/dashboard/api/testimonials.php?id=${id}`, payload)
-      : await api.post('/dashboard/api/testimonials.php', payload);
-    if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
-    showToast(res.message);
-    closeModals();
-    renderTestimonials();
-  });
-
-  $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
-    if (!_deleteTestimonialId) return;
-    const res = await api.delete(`/dashboard/api/testimonials.php?id=${_deleteTestimonialId}`);
-    if (!res.success) { showToast(res.message, 'error'); return; }
-    showToast(res.message);
-    closeModals();
-    renderTestimonials();
-    _deleteTestimonialId = null;
-  });
-}
+// async function renderTestimonials() {
+//   const res = await api.get('/dashboard/api/testimonials.php');
+//   if (!res.success) { showToast(res.message, 'error'); return; }
+//
+//   $('#testimonialsTable').innerHTML = res.data.map((t) =>
+//     `<tr>
+//        <td class="font-black">${t.name}</td>
+//        <td>${t.role || '—'}</td>
+//        <td>${'<i class="fa-solid fa-star text-yellow-400"></i>'.repeat(t.rating)}</td>
+//        <td class="max-w-[200px] truncate">${t.message}</td>
+//        <td>${badge(t.status)}</td>
+//        <td>
+//          <div class="flex gap-2">
+//            <button class="btn-soft" onclick="editTestimonial(${t.id})"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
+//            <button class="btn-soft" onclick="askDeleteTestimonial(${t.id}, '${t.name.replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash mr-1"></i>Hapus</button>
+//          </div>
+//        </td>
+//      </tr>`
+//   ).join('') || '<tr><td colspan="6" class="text-center text-slate-400">Belum ada testimoni.</td></tr>';
+// }
+//
+// window.editTestimonial = async (id) => {
+//   const res = await api.get(`/dashboard/api/testimonials.php?id=${id}`);
+//   if (!res.success) { showToast(res.message, 'error'); return; }
+//   const t = res.data;
+//   $('#testimonialModalTitle').textContent = 'Edit Testimoni';
+//   $('#testimonialId').value      = t.id;
+//   $('#testimonialName').value    = t.name;
+//   $('#testimonialRole').value    = t.role || '';
+//   $('#testimonialRating').value  = t.rating;
+//   $('#testimonialMessage').value = t.message;
+//   $('#testimonialStatus').value  = t.status;
+//   openModal('#testimonialModal');
+// };
+//
+// let _deleteTestimonialId = null;
+// window.askDeleteTestimonial = (id, name) => {
+//   _deleteTestimonialId = id;
+//   $('#deleteTestimonialModalName').textContent = name;
+//   openModal('#deleteTestimonialModal');
+// };
+//
+// function initTestimonials() {
+//   renderTestimonials();
+//   $('#addTestimonialBtn')?.addEventListener('click', () => {
+//     $('#testimonialForm').reset();
+//     $('#testimonialId').value = '';
+//     $('#testimonialModalTitle').textContent = 'Tambah Testimoni';
+//     openModal('#testimonialModal');
+//   });
+//
+//   $('#testimonialForm')?.addEventListener('submit', async (e) => {
+//     e.preventDefault();
+//     const id = $('#testimonialId').value;
+//     const payload = {
+//       name:    $('#testimonialName').value,
+//       role:    $('#testimonialRole').value || null,
+//       rating:  parseInt($('#testimonialRating').value),
+//       message: $('#testimonialMessage').value,
+//       status:  $('#testimonialStatus').value,
+//     };
+//     const res = id
+//       ? await api.put(`/dashboard/api/testimonials.php?id=${id}`, payload)
+//       : await api.post('/dashboard/api/testimonials.php', payload);
+//     if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
+//     showToast(res.message);
+//     closeModals();
+//     renderTestimonials();
+//   });
+//
+//   $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
+//     if (!_deleteTestimonialId) return;
+//     const res = await api.delete(`/dashboard/api/testimonials.php?id=${_deleteTestimonialId}`);
+//     if (!res.success) { showToast(res.message, 'error'); return; }
+//     showToast(res.message);
+//     closeModals();
+//     renderTestimonials();
+//     _deleteTestimonialId = null;
+//   });
+// }
 
 /* ----------------------------------------------------------------
  * Settings (settings.php)
@@ -872,5 +872,5 @@ if (page === 'overview')     renderOverview();
 if (page === 'products')     initProducts();
 if (page === 'categories')   initCategories();
 if (page === 'orders')       initOrders();
-if (page === 'testimonials') initTestimonials();
+// if (page === 'testimonials') initTestimonials(); // disembunyikan sementara
 if (page === 'settings')     initSettings();
