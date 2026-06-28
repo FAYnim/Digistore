@@ -21,7 +21,28 @@ renderHeader($pageTitle, $activePage);
             <option value="0">Nonaktif</option>
           </select>
         </label>
-        <label>QRIS Image URL<input class="input mt-1" id="paymentQrisImage" placeholder="https://domain.com/qris.jpg" type="url"></label>
+        <label>Gambar QRIS</label>
+        <input type="hidden" id="paymentQrisImage">
+        <div class="mt-1" id="qrisDropzone">
+          <div class="relative cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center transition hover:border-slate-400 dark:border-slate-700 dark:hover:border-slate-500" id="qrisDropArea">
+            <div id="qrisPlaceholder">
+              <svg class="mx-auto h-10 w-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 16v-8m0 0l-3 3m3-3l3 3M3 16V8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+              <p class="mt-2 text-sm font-bold text-slate-500 dark:text-slate-400">Seret gambar ke sini atau <span class="text-blue-600 dark:text-blue-400">pilih file</span></p>
+              <p class="mt-1 text-xs text-slate-400">JPG, JPEG, atau PNG &middot; Maks 2MB</p>
+            </div>
+            <div class="hidden" id="qrisPreview">
+              <img class="mx-auto h-48 w-48 rounded-2xl object-cover" id="qrisPreviewImg" alt="Preview QRIS">
+              <p class="mt-2 truncate text-xs text-slate-500 dark:text-slate-400" id="qrisFileName"></p>
+              <button type="button" class="mt-2 text-xs font-bold text-red-600 hover:underline dark:text-red-400" id="qrisRemoveBtn">Hapus gambar</button>
+            </div>
+            <input type="file" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" id="qrisFileInput" accept="image/jpeg,image/png">
+          </div>
+          <div class="mt-2 hidden" id="qrisUploadProgress">
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+              <div class="h-full w-0 rounded-full bg-blue-600 transition-all" id="qrisProgressBar"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="card space-y-3 p-5">
