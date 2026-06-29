@@ -47,14 +47,14 @@ html:not(.dark) header label,
 html:not(.dark) #openSidebar,
 html:not(.dark) #themeToggle,
 html:not(.dark) header .sm\:flex,
-html:not(.dark) .sidebar a[href="../index.html"] {
+html:not(.dark) .sidebar a[href="../index.php"] {
   border-color: rgb(226 232 240) !important;
   background: white !important;
   color: rgb(51 65 85) !important;
 }
 
 html:not(.dark) .sidebar p,
-html:not(.dark) .sidebar a[href="../index.html"] *,
+html:not(.dark) .sidebar a[href="../index.php"] *,
 html:not(.dark) header input,
 html:not(.dark) header .sm\:flex *,
 html:not(.dark) #themeToggle *,

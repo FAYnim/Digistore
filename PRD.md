@@ -545,7 +545,7 @@ function formatRupiah(value) {
 
 ```text
 digital-store/
-├── index.html
+├── index.php
 ├── PRD.md
 └── assets/
     ├── css/
