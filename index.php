@@ -12,6 +12,11 @@
   <script>
     tailwind.config = { darkMode: 'class' }
   </script>
+  <link rel="icon" href="assets/favicon/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -19,7 +24,6 @@
   <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
     <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi utama">
       <a href="#produk" class="brand-pill">
-        <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span data-store-name>DigiStore</span>
       </a>
       <div class="nav-shell hidden md:flex">
