@@ -1,6 +1,6 @@
 <?php
 // Testimoni disembunyikan sementara — redirect ke overview
-header('Location: index.php');
+header('Location: ./');
 exit;
 $pageTitle = 'Testimoni';
 $activePage = 'testimonials';

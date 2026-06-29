@@ -90,7 +90,7 @@ try {
 
     json_success('Pesanan berhasil dibuat', [
         'order_code' => $orderCode,
-        'redirect_url' => '/payment.php?code=' . rawurlencode($orderCode),
+        'redirect_url' => '/payment?code=' . rawurlencode($orderCode),
     ], 201);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

@@ -8,7 +8,7 @@ require_once __DIR__ . '/../config/database.php';
 start_admin_session();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
@@ -18,20 +18,20 @@ $csrfToken = $_POST['csrf_token'] ?? '';
 
 if (!csrf_validate($csrfToken)) {
     $_SESSION['login_error'] = 'Session tidak valid. Silakan coba lagi.';
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
 if ($username === '' || $password === '') {
     $_SESSION['login_error'] = 'Username dan password wajib diisi.';
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
 $rateKey = 'admin-login:' . rate_limit_identifier() . ':' . strtolower($username);
 if (rate_limit_exceeded($rateKey, 5, 300)) {
     $_SESSION['login_error'] = 'Terlalu banyak percobaan login. Silakan coba lagi nanti.';
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
@@ -41,13 +41,13 @@ $admin = $stmt->fetch();
 
 if (!$admin || !password_verify($password, $admin['password'])) {
     $_SESSION['login_error'] = 'Username atau password salah.';
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
 if ($admin['status'] !== 'active') {
     $_SESSION['login_error'] = 'Akun tidak aktif.';
-    header('Location: ../login.php');
+    header('Location: ../login');
     exit;
 }
 
@@ -62,5 +62,5 @@ unset($_SESSION['csrf_token'], $_SESSION['login_error']);
 $update = $pdo->prepare('UPDATE admin_users SET last_login_at = NOW() WHERE id = ?');
 $update->execute([(int) $admin['id']]);
 
-header('Location: ../index.php');
+header('Location: ../');
 exit;

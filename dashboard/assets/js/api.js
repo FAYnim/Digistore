@@ -59,7 +59,7 @@ async function apiRequest(url, opts = {}) {
       headers,
     });
     if (res.status === 401) {
-      window.location.href = 'login.php';
+      window.location.href = 'login';
       return { success: false, message: 'Unauthorized', data: null, errors: null };
     }
 
@@ -91,7 +91,7 @@ const api = {
 
       const res = await fetch(url, { method: 'POST', headers, body: formData });
       if (res.status === 401) {
-        window.location.href = 'login.php';
+        window.location.href = 'login';
         return { success: false, message: 'Unauthorized', data: null, errors: null };
       }
       return await res.json();

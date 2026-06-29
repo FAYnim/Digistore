@@ -20,13 +20,13 @@
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased">
   <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
     <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi produk">
-      <a href="index.php#produk" class="brand-pill">
+      <a href="index#produk" class="brand-pill">
         <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span>DigiStore</span>
       </a>
       <div class="nav-shell hidden md:flex">
-        <a class="nav-link" href="index.php#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
-        <a class="nav-link" href="order-status.php"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
+        <a class="nav-link" href="index#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link" href="order-status"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
       </div>
       <div class="ml-auto flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
@@ -35,8 +35,8 @@
     </nav>
     <div id="mobileMenu" class="mobile-menu hidden md:hidden">
       <div class="grid gap-2 text-sm font-semibold">
-        <a class="nav-link" href="index.php#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
-        <a class="nav-link" href="order-status.php"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
+        <a class="nav-link" href="index#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link" href="order-status"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
       </div>
     </div>
   </header>
@@ -69,14 +69,14 @@
       const el = document.getElementById('productDetail');
 
       if (!slug) {
-        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index.php" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
         return;
       }
 
       try {
-        const res = await apiGet('/products.php?slug=' + encodeURIComponent(slug));
+        const res = await apiGet('/products?slug=' + encodeURIComponent(slug));
         if (!res.success || !res.data) {
-          el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index.php" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+          el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
           return;
         }
 
@@ -113,19 +113,19 @@
 
               <div class="pt-2">
                 ${p.stock > 0
-                  ? '<a href="checkout.php?product=' + encodeURIComponent(p.slug) + '" class="primary-btn inline-flex w-full text-center">Beli Sekarang</a>'
+                  ? '<a href="checkout?product=' + encodeURIComponent(p.slug) + '" class="primary-btn inline-flex w-full text-center">Beli Sekarang</a>'
                   : '<button disabled class="primary-btn inline-flex w-full text-center opacity-50 cursor-not-allowed">Stok Habis</button>'
                 }
               </div>
 
-              <a href="index.php" class="block text-center text-sm text-[var(--muted)] hover:underline">← Kembali ke katalog</a>
+              <a href="index" class="block text-center text-sm text-[var(--muted)] hover:underline">← Kembali ke katalog</a>
             </div>
           </div>
         `;
 
         document.title = escapeText(p.name) + ' — DigiStore';
       } catch (err) {
-        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Gagal memuat produk.</p><a href="index.php" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Gagal memuat produk.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
       }
     }
 

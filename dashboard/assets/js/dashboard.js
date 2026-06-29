@@ -76,7 +76,7 @@ function initShell() {
 }
 
 /* ----------------------------------------------------------------
- * Overview (index.php)
+ * Overview (index)
  * --------------------------------------------------------------- */
 function renderOverviewCharts(data) {
   if (typeof Chart === 'undefined') return;
@@ -165,7 +165,7 @@ function renderOverviewCharts(data) {
 }
 
 async function renderOverview() {
-  const res = await api.get('/dashboard/api/stats.php');
+  const res = await api.get('/dashboard/api/stats');
   if (!res.success) { showToast(res.message, 'error'); return; }
   const d = res.data;
   latestOverviewData = d;
@@ -215,14 +215,14 @@ async function renderOverview() {
 }
 
 /* ----------------------------------------------------------------
- * Products (products.php)
+ * Products (products)
  * --------------------------------------------------------------- */
 async function renderProducts() {
   const keyword = ($('#productSearch')?.value || '').trim();
   const params  = new URLSearchParams();
   if (keyword) params.set('search', keyword);
 
-  const res = await api.get(`/dashboard/api/products.php?${params}`);
+  const res = await api.get(`/dashboard/api/products?${params}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
 
   const products = res.data;
@@ -283,7 +283,7 @@ async function loadProductAccounts(productId) {
     return;
   }
 
-  const res = await api.get(`/dashboard/api/product-accounts.php?product_id=${productId}`);
+  const res = await api.get(`/dashboard/api/product-accounts?product_id=${productId}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   productAccounts = res.data || [];
   renderProductAccounts();
@@ -300,7 +300,7 @@ function resetProductForm() {
 }
 
 window.editProduct = async (id) => {
-  const res = await api.get(`/dashboard/api/products.php?id=${id}`);
+  const res = await api.get(`/dashboard/api/products?id=${id}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   const p = res.data;
 
@@ -341,7 +341,7 @@ window.deleteProductAccount = async (id) => {
     return;
   }
 
-  const res = await api.delete(`/dashboard/api/product-accounts.php?id=${id}${force ? '&force=1' : ''}`);
+  const res = await api.delete(`/dashboard/api/product-accounts?id=${id}${force ? '&force=1' : ''}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   showToast(res.message);
   loadProductAccounts($('#productId').value);
@@ -358,7 +358,7 @@ window.duplicateProductAccount = async (id) => {
     return;
   }
 
-  const res = await api.post('/dashboard/api/product-accounts.php', { product_id: parseInt(productId), source_id: id, account_data: account.account_data });
+  const res = await api.post('/dashboard/api/product-accounts', { product_id: parseInt(productId), source_id: id, account_data: account.account_data });
   if (!res.success) { showToast(res.message, 'error'); return; }
   showToast(res.message);
   loadProductAccounts(productId);
@@ -391,8 +391,8 @@ function initProducts() {
     };
 
     const res = id
-      ? await api.put(`/dashboard/api/products.php?id=${id}`, payload)
-      : await api.post('/dashboard/api/products.php', payload);
+      ? await api.put(`/dashboard/api/products?id=${id}`, payload)
+      : await api.post('/dashboard/api/products', payload);
 
     if (!res.success) {
       showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error');
@@ -401,7 +401,7 @@ function initProducts() {
     const savedProductId = res.data?.id || id;
     const pendingAccounts = productAccounts.filter((account) => Number(account.id) < 0);
     for (const account of pendingAccounts) {
-      const accountRes = await api.post('/dashboard/api/product-accounts.php', { product_id: parseInt(savedProductId), account_data: account.account_data, status: account.status });
+      const accountRes = await api.post('/dashboard/api/product-accounts', { product_id: parseInt(savedProductId), account_data: account.account_data, status: account.status });
       if (!accountRes.success) { showToast(accountRes.message, 'error'); return; }
     }
     showToast(res.message);
@@ -441,8 +441,8 @@ function initProducts() {
     }
 
     const res = accountId
-      ? await api.put(`/dashboard/api/product-accounts.php?id=${accountId}`, payload)
-      : await api.post('/dashboard/api/product-accounts.php', payload);
+      ? await api.put(`/dashboard/api/product-accounts?id=${accountId}`, payload)
+      : await api.post('/dashboard/api/product-accounts', payload);
     if (!res.success) { showToast(res.message, 'error'); return; }
     showToast(res.message);
     closeModals();
@@ -452,7 +452,7 @@ function initProducts() {
 
   $('#confirmDelete')?.addEventListener('click', async () => {
     if (!_deleteProductId) return;
-    const res = await api.delete(`/dashboard/api/products.php?id=${_deleteProductId}`);
+    const res = await api.delete(`/dashboard/api/products?id=${_deleteProductId}`);
     if (!res.success) { showToast(res.message, 'error'); return; }
     showToast(res.message);
     closeModals();
@@ -462,10 +462,10 @@ function initProducts() {
 }
 
 /* ----------------------------------------------------------------
- * Categories (categories.php)
+ * Categories (categories)
  * --------------------------------------------------------------- */
 async function renderCategories() {
-  const res = await api.get('/dashboard/api/categories.php');
+  const res = await api.get('/dashboard/api/categories');
   if (!res.success) { showToast(res.message, 'error'); return; }
   const cats = res.data;
 
@@ -486,7 +486,7 @@ async function renderCategories() {
 }
 
 window.editCategory = async (id) => {
-  const res = await api.get(`/dashboard/api/categories.php?id=${id}`);
+  const res = await api.get(`/dashboard/api/categories?id=${id}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   const c = res.data;
   $('#categoryModalTitle').textContent = 'Edit Kategori';
@@ -529,8 +529,8 @@ function initCategories() {
       sort_order: 0,
     };
     const res = id
-      ? await api.put(`/dashboard/api/categories.php?id=${id}`, payload)
-      : await api.post('/dashboard/api/categories.php', payload);
+      ? await api.put(`/dashboard/api/categories?id=${id}`, payload)
+      : await api.post('/dashboard/api/categories', payload);
     if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
     showToast(res.message);
     closeModals();
@@ -539,7 +539,7 @@ function initCategories() {
 
   $('#confirmDeleteCategory')?.addEventListener('click', async () => {
     if (!_deleteCategoryId) return;
-    const res = await api.delete(`/dashboard/api/categories.php?id=${_deleteCategoryId}`);
+    const res = await api.delete(`/dashboard/api/categories?id=${_deleteCategoryId}`);
     if (!res.success) { showToast(res.message, 'error'); return; }
     showToast(res.message);
     closeModals();
@@ -549,7 +549,7 @@ function initCategories() {
 }
 
 /* ----------------------------------------------------------------
- * Orders (orders.php)
+ * Orders (orders)
  * --------------------------------------------------------------- */
 let activeOrderTab = 'pending_payment';
 let orderQueueCounts = {};
@@ -601,7 +601,7 @@ function renderOrders() {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
 
-  api.get(`/dashboard/api/orders.php?${params}`).then(res => {
+  api.get(`/dashboard/api/orders?${params}`).then(res => {
     if (!res.success) { showToast(res.message, 'error'); return; }
 
     updateTabCounts(res.data);
@@ -650,7 +650,7 @@ window.showOrderAndVerify = async (id) => {
 };
 
 window.showOrder = async (id) => {
-  const res = await api.get(`/dashboard/api/orders.php?id=${id}`);
+  const res = await api.get(`/dashboard/api/orders?id=${id}`);
   if (!res.success) { showToast(res.message, 'error'); return; }
   const o = res.data;
 
@@ -716,7 +716,7 @@ window.verifyPayment = async (confirmationId, action) => {
   const needsNote = action !== 'accept';
   const admin_note = needsNote ? prompt('Catatan admin untuk customer/internal:') : '';
   if (needsNote && !admin_note?.trim()) return;
-  const res = await api.post('/dashboard/api/orders.php?action=verify_payment', { confirmation_id: confirmationId, action, admin_note: admin_note?.trim() || null });
+  const res = await api.post('/dashboard/api/orders?action=verify_payment', { confirmation_id: confirmationId, action, admin_note: admin_note?.trim() || null });
   if (!res.success) { showToast(res.message, 'error'); return; }
   showToast(res.message);
   closeModals();
@@ -745,10 +745,10 @@ function initOrders() {
 }
 
 /* ----------------------------------------------------------------
- * Testimonials (testimonials.php) — disembunyikan sementara
+ * Testimonials (testimonials) — disembunyikan sementara
  * --------------------------------------------------------------- */
 // async function renderTestimonials() {
-//   const res = await api.get('/dashboard/api/testimonials.php');
+//   const res = await api.get('/dashboard/api/testimonials');
 //   if (!res.success) { showToast(res.message, 'error'); return; }
 //
 //   $('#testimonialsTable').innerHTML = res.data.map((t) =>
@@ -769,7 +769,7 @@ function initOrders() {
 // }
 //
 // window.editTestimonial = async (id) => {
-//   const res = await api.get(`/dashboard/api/testimonials.php?id=${id}`);
+//   const res = await api.get(`/dashboard/api/testimonials?id=${id}`);
 //   if (!res.success) { showToast(res.message, 'error'); return; }
 //   const t = res.data;
 //   $('#testimonialModalTitle').textContent = 'Edit Testimoni';
@@ -809,8 +809,8 @@ function initOrders() {
 //       status:  $('#testimonialStatus').value,
 //     };
 //     const res = id
-//       ? await api.put(`/dashboard/api/testimonials.php?id=${id}`, payload)
-//       : await api.post('/dashboard/api/testimonials.php', payload);
+//       ? await api.put(`/dashboard/api/testimonials?id=${id}`, payload)
+//       : await api.post('/dashboard/api/testimonials', payload);
 //     if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
 //     showToast(res.message);
 //     closeModals();
@@ -819,7 +819,7 @@ function initOrders() {
 //
 //   $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
 //     if (!_deleteTestimonialId) return;
-//     const res = await api.delete(`/dashboard/api/testimonials.php?id=${_deleteTestimonialId}`);
+//     const res = await api.delete(`/dashboard/api/testimonials?id=${_deleteTestimonialId}`);
 //     if (!res.success) { showToast(res.message, 'error'); return; }
 //     showToast(res.message);
 //     closeModals();
@@ -829,10 +829,10 @@ function initOrders() {
 // }
 
 /* ----------------------------------------------------------------
- * Settings (settings.php)
+ * Settings (settings)
  * --------------------------------------------------------------- */
 async function initSettings() {
-  const res = await api.get('/dashboard/api/settings.php');
+  const res = await api.get('/dashboard/api/settings');
   if (res.success) {
     const d = res.data;
     $('#settingStoreName').value        = d.store_name        || '';
@@ -857,7 +857,7 @@ async function initSettings() {
       default_theme:     $('#settingTheme').value,
       accent_color:      $('#settingAccentColor').value,
     };
-    const res = await api.put('/dashboard/api/settings.php', payload);
+    const res = await api.put('/dashboard/api/settings', payload);
     if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
     showToast(res.message);
   });

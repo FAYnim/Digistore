@@ -56,7 +56,7 @@ async function qrisUploadFile(file) {
 
   try {
     qrisSetProgress(40);
-    const res = await api.upload('/dashboard/api/upload-qris.php', form);
+    const res = await api.upload('/dashboard/api/upload-qris', form);
     qrisSetProgress(100);
 
     if (res.success && res.data?.path) {
@@ -173,7 +173,7 @@ function renderPaymentPreview() {
 async function initPaymentSettings() {
   initQrisDropzone();
 
-  const res = await api.get('/dashboard/api/payment-settings.php');
+  const res = await api.get('/dashboard/api/payment-settings');
   const data = res.success ? { ...paymentDefaults, ...res.data } : paymentDefaults;
 
   document.querySelector('#paymentQrisEnabled').value = data.payment_qris_enabled;
@@ -211,7 +211,7 @@ async function initPaymentSettings() {
       payment_whatsapp_message: paymentValue('#paymentWhatsappMessage'),
     };
 
-    const update = await api.put('/dashboard/api/payment-settings.php', payload);
+    const update = await api.put('/dashboard/api/payment-settings', payload);
     if (!update.success) {
       showToast(Array.isArray(update.errors) ? update.errors.join(', ') : update.message, 'error');
       return;

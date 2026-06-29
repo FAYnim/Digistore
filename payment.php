@@ -20,14 +20,14 @@
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased">
   <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
     <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi pembayaran">
-      <a href="index.php#produk" class="brand-pill">
+      <a href="index#produk" class="brand-pill">
         <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span>DigiStore</span>
       </a>
       <div class="nav-shell hidden md:flex">
-        <a class="nav-link" href="index.php#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
-        <a class="nav-link active" href="payment.php"><i class="fa-regular fa-credit-card"></i><span>Pembayaran</span></a>
-        <a class="nav-link" href="order-status.php"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
+        <a class="nav-link" href="index#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link active" href="payment"><i class="fa-regular fa-credit-card"></i><span>Pembayaran</span></a>
+        <a class="nav-link" href="order-status"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
       </div>
       <div class="ml-auto flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
@@ -145,7 +145,7 @@
     }
 
     function refreshOrderAndCheckExpired() {
-      apiGet(`/orders.php?code=${encodeURIComponent(code)}`).then((res) => {
+      apiGet(`/orders?code=${encodeURIComponent(code)}`).then((res) => {
         if (res.success) {
           const order = res.data;
           if (["expired", "cancelled"].includes(order.status)) {
@@ -154,7 +154,7 @@
               <h2 class="font-display text-2xl font-extrabold">Pembayaran</h2>
               <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800 dark:bg-red-950/30 dark:text-red-200">Waktu pembayaran sudah habis. Order ini expired. Silakan buat pesanan baru.</div>
               <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
+                <a class="small-btn text-center sm:col-span-2" href="index#produk">Kembali ke Katalog</a>
               </div>
             `;
           }
@@ -181,14 +181,14 @@
         button.textContent = "Mengirim...";
 
         try {
-          const res = await fetch("api/payment-confirmations.php", { method: "POST", body: new FormData(form) });
+          const res = await fetch("api/payment-confirmations", { method: "POST", body: new FormData(form) });
           const json = await res.json();
           if (!json.success) throw new Error(json.message || "Gagal mengirim konfirmasi.");
           showToast(json.message || "Konfirmasi berhasil dikirim.", "success");
           form.reset();
           button.textContent = "Mengalihkan...";
           setTimeout(() => {
-            window.location.href = `order-status.php?code=${encodeURIComponent(form.dataset.orderCode)}`;
+            window.location.href = `order-status?code=${encodeURIComponent(form.dataset.orderCode)}`;
           }, 2000);
         } catch (error) {
           showToast(error.message || "Gagal mengirim konfirmasi.", "error");
@@ -227,7 +227,7 @@
     async function loadOrder() {
       if (!code) return showMessage("Order tidak ditemukan.");
 
-      const res = await apiGet(`/orders.php?code=${encodeURIComponent(code)}`);
+      const res = await apiGet(`/orders?code=${encodeURIComponent(code)}`);
       if (!res.success) return showMessage(res.message || "Order tidak ditemukan.");
 
       const order = res.data;
@@ -281,8 +281,8 @@
         </form>` : ""}
         <div class="mt-6 grid gap-3 sm:grid-cols-2">
           ${hasWhatsapp && allowPayment ? `<a class="small-btn text-center" href="${waLink}" target="_blank" rel="noopener">Konfirmasi WhatsApp</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>'}
-          <a class="small-btn text-center" href="order-status.php?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
-          <a class="small-btn text-center sm:col-span-2" href="index.php#produk">Kembali ke Katalog</a>
+          <a class="small-btn text-center" href="order-status?code=${encodeURIComponent(order.order_code)}">Cek Status</a>
+          <a class="small-btn text-center sm:col-span-2" href="index#produk">Kembali ke Katalog</a>
         </div>
       `;
       bindPaymentConfirmationForm();
