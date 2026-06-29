@@ -24,7 +24,7 @@ $navItems = [
       <?php endforeach; ?>
     </nav>
     <div class="border-t border-slate-200 p-4 dark:border-slate-800">
-      <a href="../index.html" class="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"><i class="fa-solid fa-arrow-left"></i> Kembali ke Katalog</a>
+      <a href="../index.php" class="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:text-slate-200 dark:hover:border-blue-400 dark:hover:text-blue-300"><i class="fa-solid fa-arrow-left"></i> Kembali ke Katalog</a>
     </div>
   </div>
 </aside>
