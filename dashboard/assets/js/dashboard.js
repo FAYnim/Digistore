@@ -178,7 +178,7 @@ async function renderOverview() {
     ['Pesanan Hari Ini',      d.today_orders,                            'fa-solid fa-receipt'],
     ['Total Produk',          d.total_products,                          'fa-solid fa-box'],
     ['Total Penghasilan',     rupiah(d.total_income),                    'fa-solid fa-chart-line'],
-    ['Rating',                d.average_rating || '-',                   'fa-solid fa-star'],
+    ['Total Penjualan',      d.total_sales ?? 0,                              'fa-solid fa-bag-shopping'],
   ];
   $('#statsGrid').innerHTML = stats.map(([label, value, icon]) =>
     `<div class="card p-5">

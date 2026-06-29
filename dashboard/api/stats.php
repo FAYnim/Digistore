@@ -29,8 +29,9 @@ $processingProducts = scalar_int($pdo, 'SELECT COUNT(DISTINCT oi.product_id) FRO
 $todayIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE DATE(created_at) = CURDATE() AND status = "completed"');
 $todayOrders = scalar_int($pdo, 'SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()');
 $totalIncome = scalar_int($pdo, 'SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status = "completed"');
-// $averageRating = scalar_float($pdo, 'SELECT COALESCE(AVG(rating), 0) FROM testimonials WHERE status = "visible"'); // disembunyikan sementara
-$averageRating = 0;
+
+
+$totalSales = scalar_int($pdo, 'SELECT COALESCE(SUM(quantity), 0) FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE o.status IN ("paid", "processing", "delivered", "completed")');
 
 $recentStmt = $pdo->query('SELECT o.id, o.order_code, o.customer_name, o.total_amount, o.status, COALESCE(GROUP_CONCAT(oi.product_name ORDER BY oi.id SEPARATOR ", "), "—") AS products FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.id GROUP BY o.id ORDER BY o.created_at DESC LIMIT 5');
 $recentOrders = $recentStmt->fetchAll();
@@ -83,7 +84,7 @@ json_success('Statistik dashboard berhasil dimuat', [
     'today_income' => $todayIncome,
     'today_orders' => $todayOrders,
     'total_income' => $totalIncome,
-    'average_rating' => $averageRating > 0 ? number_format($averageRating, 1) : null,
+    'total_sales' => $totalSales,
     'recent_orders' => $recentOrders,
     'featured_products' => $featuredProducts,
     'income_chart' => $incomeChart,
