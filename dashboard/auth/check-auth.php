@@ -24,5 +24,5 @@ if ($isApiRequest) {
     exit;
 }
 
-header('Location: login.php');
+header('Location: login');
 exit;

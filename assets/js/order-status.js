@@ -109,11 +109,11 @@ function renderActions(order) {
   const isPendingPayment = order.status === "pending_payment";
   const whatsappLabel = isPendingPayment ? "Konfirmasi WhatsApp" : "Hubungi Admin";
   const whatsappButton = hasWhatsapp ? `<a class="primary-btn text-center" href="${waLink}" target="_blank" rel="noopener">${whatsappLabel}</a>` : '<p class="text-center text-sm font-bold text-[var(--muted)]">WhatsApp admin belum tersedia.</p>';
-  const catalogButton = '<a class="small-btn text-center" href="index.php#produk">Kembali ke Katalog</a>';
+  const catalogButton = '<a class="small-btn text-center" href="index#produk">Kembali ke Katalog</a>';
 
   if (isPendingPayment) {
     return `
-      <a class="small-btn text-center" href="payment.php?code=${encodeURIComponent(order.order_code)}">Lanjut ke Pembayaran</a>
+      <a class="small-btn text-center" href="payment?code=${encodeURIComponent(order.order_code)}">Lanjut ke Pembayaran</a>
       ${whatsappButton}
       ${catalogButton}
     `;
@@ -205,7 +205,7 @@ async function loadStatus(orderCode) {
   hideMessage();
   renderLoading();
   try {
-    const res = await apiGet(`/orders.php?code=${encodeURIComponent(orderCode)}`);
+    const res = await apiGet(`/orders?code=${encodeURIComponent(orderCode)}`);
     if (!res.success) return renderError(res.message || "Order tidak ditemukan.");
     renderOrder(res.data);
   } catch (error) {
@@ -223,7 +223,7 @@ document.querySelector("#statusForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const value = document.querySelector("#orderCode").value.trim().toUpperCase();
   if (!value) return showMessage("Kode order wajib diisi.");
-  history.replaceState(null, "", `order-status.php?code=${encodeURIComponent(value)}`);
+  history.replaceState(null, "", `order-status?code=${encodeURIComponent(value)}`);
   loadStatus(value);
 });
 

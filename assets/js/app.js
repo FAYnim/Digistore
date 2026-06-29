@@ -179,11 +179,11 @@ function initNavSpy() {
 async function loadLandingData() {
   setLoading();
   const [settings, categories, products, featured] = await Promise.all([
-    apiGet("/settings.php"),
-    apiGet("/categories.php"),
-    apiGet("/products.php"),
-    apiGet("/products.php?featured=true&limit=4"),
-    // apiGet("/testimonials.php?limit=3"), // disembunyikan sementara
+    apiGet("/settings"),
+    apiGet("/categories"),
+    apiGet("/products"),
+    apiGet("/products?featured=true&limit=4"),
+    // apiGet("/testimonials?limit=3"), // disembunyikan sementara
   ]);
 
   if (![settings, categories, products, featured].every((res) => res.success)) {
@@ -217,8 +217,8 @@ $("#sortSelect").addEventListener("change", (event) => { state.sort = event.targ
 document.addEventListener("click", (event) => {
   const detail = event.target.closest("[data-detail]");
   const buy = event.target.closest("[data-buy]");
-  if (detail && detail.dataset.detail) window.location.href = `product.php?slug=${encodeURIComponent(detail.dataset.detail)}`;
-  if (buy && buy.dataset.buy) window.location.href = `checkout.php?product=${encodeURIComponent(buy.dataset.buy)}`;
+  if (detail && detail.dataset.detail) window.location.href = `product?slug=${encodeURIComponent(detail.dataset.detail)}`;
+  if (buy && buy.dataset.buy) window.location.href = `checkout?product=${encodeURIComponent(buy.dataset.buy)}`;
 });
 
 applyTheme();

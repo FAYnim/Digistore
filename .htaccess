@@ -1,5 +1,19 @@
+DirectoryIndex index.php index.html
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    RewriteCond %{THE_REQUEST} \s/+(.+?)\.php[?\s] [NC]
+    RewriteCond %1 !^(api|dashboard/api|dashboard/auth|config|includes|scripts|database|dashboard/components|dashboard/config)/ [NC]
+    RewriteRule ^(.+)\.php$ /$1 [R=301,L,NE]
+
+    RewriteCond %{THE_REQUEST} \s/+index\.php[?\s] [NC]
+    RewriteRule ^index\.php$ / [R=301,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+?)/?$ $1.php [L,QSA]
 
     # Force HTTPS in production
     # Uncomment the lines below when deploying to production with HTTPS

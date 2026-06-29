@@ -5,7 +5,7 @@ require_once __DIR__ . '/auth/csrf.php';
 start_admin_session();
 
 if (!empty($_SESSION['admin_logged_in'])) {
-    header('Location: index.php');
+    header('Location: index');
     exit;
 }
 
@@ -41,7 +41,7 @@ $token = csrf_token();
         </div>
       <?php endif; ?>
 
-      <form class="space-y-6" method="post" action="auth/login-process.php">
+      <form class="space-y-6" method="post" action="auth/login-process">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>">
         <label class="block">
           <span class="mb-3 block text-sm font-bold text-slate-800 dark:text-slate-200">Username</span>
@@ -59,7 +59,7 @@ $token = csrf_token();
           </span>
         </label>
         <div class="text-right">
-          <a class="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-300" href="../index.php">Kembali ke katalog</a>
+          <a class="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-300" href="../index">Kembali ke katalog</a>
         </div>
         <button class="w-full rounded-xl bg-slate-950 px-4 py-4 text-sm font-black text-white shadow-[0_10px_25px_rgba(15,23,42,.16)] transition hover:-translate-y-0.5 hover:bg-blue-600 dark:bg-white dark:text-slate-950 dark:hover:bg-blue-200" type="submit">Login</button>
       </form>

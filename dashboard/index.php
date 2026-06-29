@@ -36,14 +36,14 @@ renderHeader($pageTitle, $activePage);
     <div class="card min-w-0 p-5">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-lg font-black">Pesanan Terbaru</h2>
-        <a class="text-sm font-bold text-blue-600 dark:text-blue-300" href="orders.php">Lihat semua</a>
+        <a class="text-sm font-bold text-blue-600 dark:text-blue-300" href="orders">Lihat semua</a>
       </div>
       <div class="table-wrap"><table><thead><tr><th>Kode</th><th>Customer</th><th>Produk</th><th>Total</th><th>Status</th></tr></thead><tbody id="recentOrders"></tbody></table></div>
     </div>
     <div class="card min-w-0 p-5">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-lg font-black">Produk Populer</h2>
-        <a class="text-sm font-bold text-blue-600 dark:text-blue-300" href="products.php">Kelola</a>
+        <a class="text-sm font-bold text-blue-600 dark:text-blue-300" href="products">Kelola</a>
       </div>
       <div class="space-y-3" id="popularProducts"></div>
     </div>

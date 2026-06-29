@@ -20,14 +20,14 @@
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased">
   <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
     <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi checkout">
-      <a href="index.php#produk" class="brand-pill">
+      <a href="index#produk" class="brand-pill">
         <span class="brand-mark"><i class="fa-solid fa-cubes-stacked"></i></span>
         <span>DigiStore</span>
       </a>
       <div class="nav-shell hidden md:flex">
-        <a class="nav-link" href="index.php#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
-        <a class="nav-link active" href="checkout.php"><i class="fa-regular fa-credit-card"></i><span>Checkout</span></a>
-        <a class="nav-link" href="order-status.php"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
+        <a class="nav-link" href="index#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
+        <a class="nav-link active" href="checkout"><i class="fa-regular fa-credit-card"></i><span>Checkout</span></a>
+        <a class="nav-link" href="order-status"><i class="fa-regular fa-clipboard"></i><span>Status</span></a>
       </div>
       <div class="ml-auto flex items-center gap-2">
         <button id="themeToggle" class="icon-btn" type="button" aria-label="Ganti tema"><i class="fa-regular fa-moon"></i></button>
@@ -37,7 +37,7 @@
 
   <main class="section">
     <div class="mb-8">
-      <a class="text-sm font-bold text-[var(--muted)]" href="index.php#produk">Katalog</a>
+      <a class="text-sm font-bold text-[var(--muted)]" href="index#produk">Katalog</a>
       <span class="text-sm text-[var(--muted)]"> / Checkout</span>
       <h1 class="mt-3 font-display text-4xl font-extrabold">Checkout</h1>
       <p class="mt-3 text-[var(--muted)]">Lengkapi data pembelian.</p>
@@ -96,7 +96,7 @@
         return;
       }
 
-      const res = await apiGet(`/products.php?slug=${encodeURIComponent(slug)}`);
+      const res = await apiGet(`/products?slug=${encodeURIComponent(slug)}`);
       if (!res.success) {
         showMessage(res.message || "Produk tidak ditemukan.");
         return;
@@ -130,7 +130,7 @@
       button.disabled = true;
       button.textContent = "Memproses...";
 
-      const res = await apiPost("/checkout.php", {
+      const res = await apiPost("/checkout", {
         product_id: Number(selectedProduct.id),
         quantity: 1,
         customer_name: customerName,
@@ -140,7 +140,7 @@
       });
 
       if (res.success) {
-        window.location.href = `payment.php?code=${encodeURIComponent(res.data.order_code)}`;
+        window.location.href = `payment?code=${encodeURIComponent(res.data.order_code)}`;
         return;
       }
 

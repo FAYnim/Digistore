@@ -9,7 +9,7 @@
       <div class="text-right leading-tight">
         <div class="text-sm font-black text-slate-800 dark:text-slate-100"><?= htmlspecialchars($_SESSION['admin_username'] ?? '', ENT_QUOTES, 'UTF-8') ?></div>
       </div>
-      <a class="text-sm font-black text-red-600 hover:text-red-700 dark:text-red-400" href="logout.php">Logout</a>
+      <a class="text-sm font-black text-red-600 hover:text-red-700 dark:text-red-400" href="logout">Logout</a>
     </div>
   </div>
 </header>
