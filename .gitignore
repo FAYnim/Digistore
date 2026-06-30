@@ -4,3 +4,6 @@ uploads/qris/*
 !uploads/qris/.gitkeep
 dashboard/uploads/qris/*
 !dashboard/uploads/qris/.gitkeep
+uploads/products/*
+!uploads/products/.gitkeep
+!uploads/products/.htaccess

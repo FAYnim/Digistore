@@ -36,7 +36,13 @@ function validate_product_payload(array $body, bool $partial = false): array
     if (array_key_exists('status', $body) && !in_array($body['status'], $status, true)) $errors[] = 'status hanya boleh: active, draft, out_of_stock';
     if (array_key_exists('image_url', $body) && trim((string) $body['image_url']) !== '') {
         $url = trim((string) $body['image_url']);
-        if (strlen($url) > 255 || !filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') $errors[] = 'image_url harus URL https valid maksimal 255 karakter';
+        if (strlen($url) > 255) {
+            $errors[] = 'image_url maksimal 255 karakter';
+        } elseif (str_starts_with($url, 'uploads/products/')) {
+            if (str_contains($url, '..')) $errors[] = 'image_url tidak valid';
+        } elseif (!filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
+            $errors[] = 'image_url harus URL https atau path upload valid';
+        }
     }
     if (array_key_exists('description', $body) && strlen(trim((string) $body['description'])) > 5000) $errors[] = 'description maksimal 5000 karakter';
 
@@ -278,12 +284,21 @@ switch ($method) {
     case 'DELETE':
         if (!$id) json_error('ID produk diperlukan', null, 400);
 
-        $chk = $pdo->prepare('SELECT id FROM products WHERE id = ? AND archived_at IS NULL');
+        $chk = $pdo->prepare('SELECT id, image_url FROM products WHERE id = ? AND archived_at IS NULL');
         $chk->execute([$id]);
-        if (!$chk->fetch()) json_error('Produk tidak ditemukan', null, 404);
+        $product = $chk->fetch();
+        if (!$product) json_error('Produk tidak ditemukan', null, 404);
 
         $stmt = $pdo->prepare('UPDATE products SET archived_at = NOW(), status = "draft", is_featured = 0 WHERE id = ? AND archived_at IS NULL');
         $stmt->execute([$id]);
+
+        if ($product['image_url'] && str_starts_with($product['image_url'], 'uploads/products/')) {
+            $imageFile = dirname(__DIR__, 2) . '/' . $product['image_url'];
+            if (is_file($imageFile)) {
+                unlink($imageFile);
+            }
+        }
+
         json_success('Produk berhasil diarsipkan');
         break;
 

@@ -204,7 +204,7 @@ async function renderOverview() {
 
   $('#popularProducts').innerHTML = (d.featured_products || []).map((p) =>
     `<div class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
-       <img class="h-14 w-14 rounded-xl object-cover" src="${p.image_url || 'https://placehold.co/100'}" loading="lazy" alt="">
+       <img class="h-14 w-14 rounded-xl object-cover" src="${p.image_url ? '../' + p.image_url : 'https://placehold.co/100'}" loading="lazy" alt="">
        <div class="min-w-0 flex-1">
          <p class="truncate font-black">${p.name}</p>
          <p class="text-sm text-slate-500 dark:text-slate-400">${rupiah(p.price)}</p>
@@ -231,7 +231,7 @@ async function renderProducts() {
     `<tr>
        <td>
          <div class="flex items-center gap-3">
-           <img class="h-12 w-12 rounded-xl object-cover" src="${p.image_url || 'https://placehold.co/100'}" loading="lazy" alt="">
+           <img class="h-12 w-12 rounded-xl object-cover" src="${p.image_url ? '../' + p.image_url : 'https://placehold.co/100'}" loading="lazy" alt="">
             <div>
               <p class="font-black">${p.name}</p>
             </div>
@@ -295,6 +295,8 @@ function resetProductForm() {
   $('#productId').value = '';
   $('#productImage').value = '';
   $('#productModalTitle').textContent = 'Tambah Produk';
+  productImageOldPath = '';
+  productImageShowPlaceholder();
   productAccounts = [];
   renderProductAccounts();
 }
@@ -313,6 +315,7 @@ window.editProduct = async (id) => {
   $('#productImage').value           = p.image_url || '';
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
+  productImageSetFromUrl(p.image_url || '');
 
   productAccounts = p.accounts || [];
   renderProductAccounts();
@@ -374,6 +377,7 @@ window.askDeleteProduct = (id, name) => {
 function initProducts() {
   renderProducts();
   $('#productSearch')?.addEventListener('input', renderProducts);
+  initProductImageDropzone();
   $('#addProductBtn')?.addEventListener('click', () => { resetProductForm(); openModal('#productModal'); });
 
   $('#productForm')?.addEventListener('submit', async (e) => {
