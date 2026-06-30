@@ -228,6 +228,7 @@ document.querySelector("#statusForm").addEventListener("submit", (event) => {
 });
 
 updateThemeIcon();
+loadStoreName();
 
 if (code) {
   const normalizedCode = code.toUpperCase();
