@@ -149,7 +149,7 @@ function initProductImageDropzone() {
 function productImageSetFromUrl(url) {
   productImageOldPath = url || '';
   if (url && url.startsWith('uploads/products/')) {
-    productImageShowPreview(url, url.split('/').pop(), 0);
+    productImageShowPreview('../' + url, url.split('/').pop(), 0);
   } else if (url) {
     productImageShowPreview(url, url.split('/').pop(), 0);
   } else {
