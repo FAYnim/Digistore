@@ -295,6 +295,8 @@ function resetProductForm() {
   $('#productId').value = '';
   $('#productImage').value = '';
   $('#productModalTitle').textContent = 'Tambah Produk';
+  productImageOldPath = '';
+  productImageShowPlaceholder();
   productAccounts = [];
   renderProductAccounts();
 }
@@ -313,6 +315,7 @@ window.editProduct = async (id) => {
   $('#productImage').value           = p.image_url || '';
   $('#productDescription').value     = p.description || '';
   $('#productFeatured').checked      = !!p.is_featured;
+  productImageSetFromUrl(p.image_url || '');
 
   productAccounts = p.accounts || [];
   renderProductAccounts();
@@ -374,6 +377,7 @@ window.askDeleteProduct = (id, name) => {
 function initProducts() {
   renderProducts();
   $('#productSearch')?.addEventListener('input', renderProducts);
+  initProductImageDropzone();
   $('#addProductBtn')?.addEventListener('click', () => { resetProductForm(); openModal('#productModal'); });
 
   $('#productForm')?.addEventListener('submit', async (e) => {
