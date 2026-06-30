@@ -61,7 +61,7 @@ function productCard(product) {
           <span class="status ${stock.className}">${stock.label}</span>
         </div>
         <h3 class="product-title">${safeName}</h3>
-        <p class="product-desc">${escapeText(product.description)}</p>
+        <p class="product-desc">${escapeText(product.description).slice(0,100)}${product.description.length>100?'...':''}</p>
         <div class="product-meta"><span><i class="fa-solid fa-star text-[var(--warning)]"></i> ${product.rating}</span><span>${product.sold}+ terjual</span><span>Stok ${product.stock}</span></div>
         <div class="price"><strong>${formatRupiah(product.price)}</strong>${originalPrice}</div>
         <div class="card-actions">

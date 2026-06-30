@@ -50,7 +50,7 @@
     <div id="message" class="mb-6 hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm font-bold text-[var(--danger)]"></div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-      <form id="checkoutForm" class="modal-card grid w-full max-w-none gap-5">
+      <form id="checkoutForm" class="modal-card grid w-full max-w-none gap-5 self-start">
         <h2 class="font-display text-2xl font-extrabold">Form Pembeli</h2>
         <label class="grid gap-2 text-sm font-bold">Nama
           <input id="customerName" class="control" type="text" placeholder="John Doe" autocomplete="name">
