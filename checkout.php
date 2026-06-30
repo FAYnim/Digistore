@@ -26,7 +26,7 @@
   <header class="sticky top-0 z-50 px-4 py-4 lg:px-8">
     <nav class="mx-auto flex max-w-7xl items-center gap-4" aria-label="Navigasi checkout">
       <a href="index#produk" class="brand-pill">
-        <span>DigiStore</span>
+        <span data-store-name>DigiStore</span>
       </a>
       <div class="nav-shell hidden md:flex">
         <a class="nav-link" href="index#produk"><i class="fa-solid fa-box-open"></i><span>Katalog</span></a>
@@ -160,6 +160,7 @@
     });
     document.querySelector("#checkoutForm").addEventListener("submit", submitOrder);
     updateThemeIcon();
+    loadStoreName();
     loadProduct();
   </script>
 </body>

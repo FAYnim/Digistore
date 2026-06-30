@@ -33,3 +33,15 @@ async function apiPost(endpoint, payload) {
     };
   }
 }
+
+async function loadStoreName() {
+  try {
+    const res = await apiGet("/settings");
+    if (res.success && res.data) {
+      const storeName = res.data.store_name || "DigiStore";
+      document.querySelectorAll("[data-store-name]").forEach((el) => {
+        el.textContent = storeName;
+      });
+    }
+  } catch (e) {}
+}
