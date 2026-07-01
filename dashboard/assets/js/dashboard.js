@@ -757,20 +757,19 @@ async function renderTestimonials() {
 
   $('#testimonialsTable').innerHTML = res.data.map((t) =>
     `<tr>
-       <td class=\"font-black\">${esc(t.name)}</td>
-       <td>${t.role ? esc(t.role) : '—'}</td>
+       <td class=\"font-black\">${escapeHtml(t.name)}</td>
+       <td>${t.role ? escapeHtml(t.role) : '—'}</td>
        <td class=\"text-yellow-500\">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</td>
-       <td class=\"max-w-[180px] truncate\">${t.image_path ? '<img src="../' + t.image_path + '" class=\"inline h-10 w-10 rounded-lg object-cover\'>' : '—'}</td>
-       <td class=\"max-w-[200px] truncate\">${esc(t.message)}</td>
+       <td class=\"max-w-[200px] truncate\">${escapeHtml(t.message)}</td>
        <td>${badge(t.status)}</td>
        <td>
          <div class=\"flex gap-2\">
            <button class=\"btn-soft\" onclick=\"editTestimonial(${t.id})\"><i class=\"fa-solid fa-pen mr-1\"></i>Edit</button>
-           <button class=\"btn-soft\" onclick=\"askDeleteTestimonial(${t.id}, '${esc(t.name).replace(/'/g, "\\'")}')\"><i class=\"fa-solid fa-trash mr-1\"></i>Hapus</button>
+           <button class=\"btn-soft\" onclick=\"askDeleteTestimonial(${t.id}, '${escapeHtml(t.name).replace(/'/g, "\\'")}')\"><i class=\"fa-solid fa-trash mr-1\"></i>Hapus</button>
          </div>
        </td>
      </tr>`
-  ).join('') || '<tr><td colspan=\"7\" class=\"text-center text-slate-400\">Belum ada testimoni.</td></tr>';
+  ).join('') || '<tr><td colspan=\"6\" class=\"text-center text-slate-400\">Belum ada testimoni.</td></tr>';
 }
 
 window.editTestimonial = async (id) => {
