@@ -21,6 +21,19 @@ function escapeText(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
+function timeAgo(dateString) {
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (seconds < 60) return "baru saja";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} menit yang lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam yang lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days} hari yang lalu`;
+}
+
 function stockInfo(product) {
   if (product.status === "out_of_stock" || Number(product.stock) <= 0) return { label: "Habis", className: "out", disabled: true };
   if (Number(product.stock) <= 5) return { label: "Stok Terbatas", className: "low", disabled: false };
