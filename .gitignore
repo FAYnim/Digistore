@@ -7,3 +7,5 @@ dashboard/uploads/qris/*
 uploads/products/*
 !uploads/products/.gitkeep
 !uploads/products/.htaccess
+uploads/testimonials/*
+!uploads/testimonials/.gitkeep
