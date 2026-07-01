@@ -15,7 +15,7 @@ renderHeader($pageTitle, $activePage);
 
 <!-- Modal Tambah/Edit Testimoni -->
 <div class="modal fixed inset-0 z-50 place-items-center bg-slate-950/60 p-4" id="testimonialModal">
-  <div class="card w-full max-w-xl p-5">
+  <div class="card max-h-[90vh] w-full max-w-xl overflow-y-auto p-5">
     <div class="mb-4 flex items-center justify-between">
       <h3 class="text-xl font-black" id="testimonialModalTitle">Tambah Testimoni</h3>
       <button class="btn-soft" data-close-modal type="button">Tutup</button>
