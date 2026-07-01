@@ -5,7 +5,7 @@ const state = {
   products: [],
   featured: [],
   categories: [],
-  // testimonials: [], // disembunyikan sementara
+  testimonials: [],
   settings: {},
   purchases: [],
   toastIndex: 0,
@@ -182,19 +182,68 @@ function renderFeatured() {
   $("#featuredGrid").innerHTML = state.featured.map(productCard).join("") || '<div class="empty-state lg:col-span-4"><h3>Produk unggulan belum tersedia.</h3></div>';
 }
 
-// Testimoni disembunyikan sementara
-// function renderTestimonials() {
-//   $("#testimonialGrid").innerHTML = state.testimonials.map((item) => {
-//     const stars = Array.from({ length: 5 }, (_, i) => i < Number(item.rating || 0) ? '<i class="fa-solid fa-star"></i>' : '<i class="fa-regular fa-star"></i>').join("");
-//     return `
-//     <article class="testimonial-card">
-//       <div class="text-[var(--warning)]">${stars}</div>
-//       <p>${escapeText(item.message)}</p>
-//       <b class="mt-5 block">${escapeText(item.name)}</b>
-//       <span class="text-sm font-bold text-[var(--muted)]">${escapeText(item.role || "Pelanggan")}</span>
-//     </article>`;
-//   }).join("") || '<div class="empty-state lg:col-span-3"><h3>Testimoni belum tersedia.</h3></div>';
-// }
+function getInitials(name) {
+  return (name || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+}
+
+function avatarColor(name) {
+  const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#f97316'];
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function renderTestimonials() {
+  const items = state.testimonials;
+  if (!items.length) {
+    $('#testimonialGrid').innerHTML = '<div class="lg:col-span-4 empty-state" style="margin-top:0"><h3>Testimoni belum tersedia.</h3></div>';
+    return;
+  }
+
+  $('#testimonialGrid').innerHTML = items.map((item) => {
+    const stars = '<span class="testimonial-rating">' + '★'.repeat(Math.min(5, Math.max(0, Number(item.rating || 0)))) + '</span>';
+    if (item.image_path) {
+      return `
+        <div class="testimonial-image-card" onclick="openLightbox('${escapeText(item.image_path)}')">
+          <img src="${escapeText(item.image_path)}" alt="Testimoni ${escapeText(item.name)}" loading="lazy">
+          <div class="testimonial-overlay">
+            <div class="testimonial-name">${escapeText(item.name)}</div>
+            <div class="testimonial-role">${escapeText(item.role || 'Pelanggan')}</div>
+          </div>
+        </div>`;
+    }
+    return `
+      <article class="testimonial-card">
+        <div class="testimonial-header">
+          <div class="testimonial-avatar" style="background:${avatarColor(item.name)}">${getInitials(item.name)}</div>
+          <div>
+            <div class="testimonial-name">${escapeText(item.name)}</div>
+            <div class="testimonial-role">${escapeText(item.role || 'Pelanggan')}</div>
+          </div>
+          ${stars}
+        </div>
+        <p class="testimonial-message">"${escapeText(item.message)}"</p>
+      </article>`;
+  }).join('');
+}
+
+function openLightbox(src) {
+  const exists = document.querySelector('.lightbox-overlay');
+  if (exists) exists.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'lightbox-overlay';
+  overlay.innerHTML = `
+    <button class="lightbox-close" type="button" aria-label="Tutup">&times;</button>
+    <img src="${escapeText(src)}" alt="Testimoni" onclick="event.stopPropagation()">
+  `;
+  overlay.addEventListener('click', () => overlay.remove());
+  overlay.querySelector('.lightbox-close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    overlay.remove();
+  });
+  document.body.appendChild(overlay);
+}
 
 function renderSettings() {
   const settings = state.settings;
@@ -214,7 +263,7 @@ function renderSettings() {
 function setLoading() {
   $("#productGrid").innerHTML = '<div class="empty-state xl:col-span-4"><h3>Memuat produk...</h3></div>';
   $("#featuredGrid").innerHTML = '<div class="empty-state lg:col-span-4"><h3>Memuat produk unggulan...</h3></div>';
-  // $("#testimonialGrid").innerHTML = '<div class="empty-state lg:col-span-3"><h3>Memuat testimoni...</h3></div>'; // disembunyikan sementara
+  $("#testimonialGrid").innerHTML = '<div class="lg:col-span-4 empty-state" style="margin-top:0"><h3>Memuat testimoni...</h3></div>';
 }
 
 function setError() {
@@ -259,15 +308,15 @@ function initNavSpy() {
 
 async function loadLandingData() {
   setLoading();
-  const [settings, categories, products, featured] = await Promise.all([
+  const [settings, categories, products, featured, testimonials] = await Promise.all([
     apiGet("/settings"),
     apiGet("/categories"),
     apiGet("/products"),
     apiGet("/products?featured=true&limit=4"),
-    // apiGet("/testimonials?limit=3"), // disembunyikan sementara
+    apiGet("/testimonials?limit=4"),
   ]);
 
-  if (![settings, categories, products, featured].every((res) => res.success)) {
+  if (![settings, categories, products, featured, testimonials].every((res) => res.success)) {
     setError();
     return;
   }
@@ -276,14 +325,14 @@ async function loadLandingData() {
   state.categories = categories.data || [];
   state.products = (products.data || []).map(normalizeProduct);
   state.featured = (featured.data || []).map(normalizeProduct);
-  // state.testimonials = testimonials.data || []; // disembunyikan sementara
+  state.testimonials = testimonials.data || [];
 
   renderSettings();
   applyTheme(state.settings.default_theme);
   renderCategories();
   renderFeatured();
   renderProducts();
-  // renderTestimonials(); // disembunyikan sementara
+  renderTestimonials();
   initPurchaseToast();
 }
 
