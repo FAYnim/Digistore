@@ -56,10 +56,14 @@ function showPurchaseToast(purchase) {
   el.className = "purchase-toast";
   el.setAttribute("role", "status");
   el.setAttribute("aria-live", "polite");
+  const productHtml = purchase.product_slug
+    ? `<a href="product?slug=${escapeText(purchase.product_slug)}" class="toast-product">${escapeText(purchase.product_name)}</a>`
+    : `<span class="toast-product">${escapeText(purchase.product_name)}</span>`;
+
   el.innerHTML = `
     <div class="toast-avatar">${escapeText(getInitial(purchase.customer_name))}</div>
     <div class="toast-body">
-      <div class="toast-line"><b class="toast-name">${escapeText(purchase.customer_name)}</b> membeli <span class="toast-product">${escapeText(purchase.product_name)}</span></div>
+      <div class="toast-line"><b class="toast-name">${escapeText(purchase.customer_name)}</b> membeli ${productHtml}</div>
       <div class="toast-time"><i class="fa-regular fa-clock"></i> ${escapeText(timeAgo(purchase.created_at))}</div>
     </div>
     <button class="toast-close" type="button" aria-label="Tutup notifikasi">✕</button>

@@ -159,6 +159,8 @@ body { font-family: "Plus Jakarta Sans", sans-serif; min-height: 100vh; backgrou
 .purchase-toast .toast-line { font-size: 13px; line-height: 1.4; color: var(--text); }
 .purchase-toast .toast-name { color: var(--muted); font-weight: 700; }
 .purchase-toast .toast-product { color: var(--accent); font-weight: 800; }
+a.toast-product { text-decoration: none; }
+a.toast-product:hover { text-decoration: underline; }
 .purchase-toast .toast-time { margin-top: 4px; font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .purchase-toast .toast-close { background: none; border: 0; color: var(--muted); font-size: 14px; cursor: pointer; padding: 4px 6px; line-height: 1; }
 .purchase-toast .toast-close:hover { color: var(--text); }

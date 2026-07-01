@@ -19,9 +19,11 @@ try {
         "SELECT
            o.customer_name,
            oi.product_name,
+           p.slug AS product_slug,
            o.created_at
          FROM orders o
          JOIN order_items oi ON oi.order_id = o.id
+         LEFT JOIN products p ON p.id = oi.product_id
          WHERE o.status = 'completed'
          ORDER BY o.created_at DESC
          LIMIT :limit"
@@ -34,6 +36,7 @@ try {
         return [
             'customer_name' => mask_customer_name((string) $row['customer_name']),
             'product_name'  => (string) $row['product_name'],
+            'product_slug'  => (string) ($row['product_slug'] ?? ''),
             'created_at'    => (string) $row['created_at'],
         ];
     }, $rows);
