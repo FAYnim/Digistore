@@ -26,7 +26,7 @@ switch ($method) {
     // ----------------------------------------------------------------
     case 'GET':
         if ($id) {
-            $stmt = $pdo->prepare('SELECT * FROM testimonials WHERE id = ?');
+            $stmt = $pdo->prepare('SELECT id, name, role, message, image_path, rating, status, created_at, updated_at FROM testimonials WHERE id = ?');
             $stmt->execute([$id]);
             $row = $stmt->fetch();
             if (!$row) json_error('Testimoni tidak ditemukan', null, 404);
@@ -41,7 +41,7 @@ switch ($method) {
             $params[] = $_GET['status'];
         }
 
-        $stmt = $pdo->prepare("SELECT * FROM testimonials $filter ORDER BY created_at DESC");
+        $stmt = $pdo->prepare("SELECT id, name, role, message, image_path, rating, status, created_at, updated_at FROM testimonials $filter ORDER BY created_at DESC");
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
         foreach ($rows as &$row) {
@@ -70,18 +70,19 @@ switch ($method) {
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         $stmt = $pdo->prepare(
-            'INSERT INTO testimonials (name, role, message, rating, status) VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO testimonials (name, role, message, image_path, rating, status) VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([
-            trim($body['name']),
-            $body['role']    ?? null,
-            trim($body['message']),
-            isset($body['rating']) ? max(1, min(5, (int) $body['rating'])) : 5,
-            $body['status']  ?? 'visible',
-        ]);
+$stmt->execute([
+    trim($body['name']),
+    $body['role']    ?? null,
+    trim($body['message']),
+    $body['image_path'] ?? null,
+    isset($body['rating']) ? max(1, min(5, (int) $body['rating'])) : 5,
+    $body['status']  ?? 'visible',
+]);
 
         $newId = (int) $pdo->lastInsertId();
-        $stmt2 = $pdo->prepare('SELECT * FROM testimonials WHERE id = ?');
+        $stmt2 = $pdo->prepare('SELECT id, name, role, message, image_path, rating, status, created_at, updated_at FROM testimonials WHERE id = ?');
         $stmt2->execute([$newId]);
         $created = $stmt2->fetch();
         $created['rating'] = (int) $created['rating'];
@@ -94,7 +95,7 @@ switch ($method) {
     case 'PUT':
         if (!$id) json_error('ID testimoni diperlukan', null, 400);
 
-        $old = $pdo->prepare('SELECT * FROM testimonials WHERE id = ?');
+        $old = $pdo->prepare('SELECT id, name, role, message, image_path, rating, status, created_at, updated_at FROM testimonials WHERE id = ?');
         $old->execute([$id]);
         $current = $old->fetch();
         if (!$current) json_error('Testimoni tidak ditemukan', null, 404);
@@ -113,18 +114,19 @@ switch ($method) {
         if ($errors) json_error('Validasi gagal', $errors, 422);
 
         $stmt = $pdo->prepare(
-            'UPDATE testimonials SET name=?, role=?, message=?, rating=?, status=? WHERE id=?'
+            'UPDATE testimonials SET name=?, role=?, message=?, image_path=?, rating=?, status=? WHERE id=?'
         );
-        $stmt->execute([
-            isset($body['name'])    ? trim($body['name'])    : $current['name'],
-            array_key_exists('role', $body)    ? $body['role']    : $current['role'],
-            isset($body['message']) ? trim($body['message']) : $current['message'],
-            isset($body['rating'])  ? max(1, min(5, (int)$body['rating'])) : (int)$current['rating'],
-            $body['status'] ?? $current['status'],
-            $id,
-        ]);
+$stmt->execute([
+    isset($body['name'])    ? trim($body['name'])    : $current['name'],
+    array_key_exists('role', $body)    ? $body['role']    : $current['role'],
+    isset($body['message']) ? trim($body['message']) : $current['message'],
+    array_key_exists('image_path', $body) ? $body['image_path'] : $current['image_path'],
+    isset($body['rating'])  ? max(1, min(5, (int)$body['rating'])) : (int)$current['rating'],
+    $body['status'] ?? $current['status'],
+    $id,
+]);
 
-        $updated = $pdo->prepare('SELECT * FROM testimonials WHERE id = ?');
+        $updated = $pdo->prepare('SELECT id, name, role, message, image_path, rating, status, created_at, updated_at FROM testimonials WHERE id = ?');
         $updated->execute([$id]);
         $result = $updated->fetch();
         $result['rating'] = (int) $result['rating'];
@@ -140,6 +142,16 @@ switch ($method) {
         $chk = $pdo->prepare('SELECT id FROM testimonials WHERE id = ?');
         $chk->execute([$id]);
         if (!$chk->fetch()) json_error('Testimoni tidak ditemukan', null, 404);
+
+        $del = $pdo->prepare('SELECT image_path FROM testimonials WHERE id = ?');
+        $del->execute([$id]);
+        $oldImage = $del->fetchColumn();
+        if ($oldImage && str_starts_with($oldImage, 'uploads/testimonials/')) {
+            $oldFile = dirname(__DIR__, 2) . '/' . $oldImage;
+            if (is_file($oldFile)) {
+                unlink($oldFile);
+            }
+        }
 
         $stmt = $pdo->prepare('DELETE FROM testimonials WHERE id = ?');
         $stmt->execute([$id]);
