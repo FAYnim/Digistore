@@ -749,8 +749,254 @@ function initOrders() {
 }
 
 /* ----------------------------------------------------------------
- * Testimonials (testimonials) — disembunyikan sementara
+ * Testimonials
  * --------------------------------------------------------------- */
+async function renderTestimonials() {
+  const res = await api.get('/dashboard/api/testimonials');
+  if (!res.success) { showToast(res.message, 'error'); return; }
+
+  $('#testimonialsTable').innerHTML = res.data.map((t) =>
+    `<tr>
+       <td class=\"font-black\">${escapeHtml(t.name)}</td>
+       <td>${t.role ? escapeHtml(t.role) : '—'}</td>
+       <td class=\"text-yellow-500\">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</td>
+       <td class=\"max-w-[200px] truncate\">${escapeHtml(t.message)}</td>
+       <td>${badge(t.status)}</td>
+       <td>
+         <div class=\"flex gap-2\">
+           <button class=\"btn-soft\" onclick=\"editTestimonial(${t.id})\"><i class=\"fa-solid fa-pen mr-1\"></i>Edit</button>
+           <button class=\"btn-soft\" onclick=\"askDeleteTestimonial(${t.id}, '${escapeHtml(t.name).replace(/'/g, "\\'")}')\"><i class=\"fa-solid fa-trash mr-1\"></i>Hapus</button>
+         </div>
+       </td>
+     </tr>`
+  ).join('') || '<tr><td colspan=\"6\" class=\"text-center text-slate-400\">Belum ada testimoni.</td></tr>';
+}
+
+window.editTestimonial = async (id) => {
+  const res = await api.get(`/dashboard/api/testimonials?id=${id}`);
+  if (!res.success) { showToast(res.message, 'error'); return; }
+  const t = res.data;
+  $('#testimonialModalTitle').textContent = 'Edit Testimoni';
+  $('#testimonialId').value      = t.id;
+  $('#testimonialName').value    = t.name;
+  $('#testimonialRole').value    = t.role || '';
+  $('#testimonialRating').value  = t.rating;
+  $('#testimonialMessage').value = t.message;
+  $('#testimonialStatus').value  = t.status;
+  $('#testimonialImagePath').value = t.image_path || '';
+  testimonialImageSetFromUrl(t.image_path);
+  openModal('#testimonialModal');
+};
+
+let _deleteTestimonialId = null;
+window.askDeleteTestimonial = (id, name) => {
+  _deleteTestimonialId = id;
+  $('#deleteTestimonialModalName').textContent = name;
+  openModal('#deleteTestimonialModal');
+};
+
+function initTestimonials() {
+  renderTestimonials();
+  $('#addTestimonialBtn')?.addEventListener('click', () => {
+    $('#testimonialForm').reset();
+    $('#testimonialId').value = '';
+    $('#testimonialModalTitle').textContent = 'Tambah Testimoni';
+    $('#testimonialImagePath').value = '';
+    testimonialImageShowPlaceholder();
+    openModal('#testimonialModal');
+  });
+
+  $('#testimonialForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = $('#testimonialId').value;
+    const payload = {
+      name:       $('#testimonialName').value,
+      role:       $('#testimonialRole').value || null,
+      rating:     parseInt($('#testimonialRating').value),
+      message:    $('#testimonialMessage').value,
+      status:     $('#testimonialStatus').value,
+      image_path: $('#testimonialImagePath').value || null,
+    };
+    const res = id
+      ? await api.put(`/dashboard/api/testimonials?id=${id}`, payload)
+      : await api.post('/dashboard/api/testimonials', payload);
+    if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderTestimonials();
+  });
+
+  $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
+    if (!_deleteTestimonialId) return;
+    const res = await api.delete(`/dashboard/api/testimonials?id=${_deleteTestimonialId}`);
+    if (!res.success) { showToast(res.message, 'error'); return; }
+    showToast(res.message);
+    closeModals();
+    renderTestimonials();
+    _deleteTestimonialId = null;
+  });
+
+  initTestimonialImageUpload();
+}
+/* ----------------------------------------------------------------
+ * Testimonial Image Upload
+ * --------------------------------------------------------------- */
+let testimonialImageUploading = false;
+
+function testimonialImageShowPlaceholder() {
+  $('#testimonialImagePlaceholder')?.classList.remove('hidden');
+  $('#testimonialImagePreview')?.classList.add('hidden');
+  $('#testimonialImageRemoveBtn')?.classList.add('hidden');
+}
+
+function testimonialImageShowPreview(src, fileName, fileSize) {
+  const img = $('#testimonialImagePreviewImg');
+  const nameEl = $('#testimonialImageFileName');
+  const sizeEl = $('#testimonialImageFileSize');
+  if (img) img.src = src;
+  if (nameEl) nameEl.textContent = fileName || '';
+  if (sizeEl) sizeEl.textContent = fileSize ? (fileSize / 1024).toFixed(1) + ' KB' : '';
+  $('#testimonialImagePlaceholder')?.classList.add('hidden');
+  $('#testimonialImagePreview')?.classList.remove('hidden');
+  $('#testimonialImageRemoveBtn')?.classList.remove('hidden');
+}
+
+function testimonialImageSetProgress(percent) {
+  const bar = $('#testimonialImageProgressBar');
+  const wrap = $('#testimonialImageUploadProgress');
+  if (bar) bar.style.width = percent + '%';
+  if (wrap) wrap.classList.toggle('hidden', percent <= 0 || percent >= 100);
+}
+
+function testimonialImageValidateFile(file) {
+  const allowed = ['image/jpeg', 'image/png'];
+  if (!allowed.includes(file.type)) {
+    showToast('Format gambar hanya JPG, JPEG, atau PNG.', 'error');
+    return false;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Ukuran gambar maksimal 2MB.', 'error');
+    return false;
+  }
+  return true;
+}
+
+async function testimonialImageResize(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const maxSize = 800;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+}
+
+async function testimonialImageUploadFile(file) {
+  if (testimonialImageUploading) return;
+  if (!testimonialImageValidateFile(file)) return;
+  testimonialImageUploading = true;
+
+  const reader = new FileReader();
+  reader.onload = () => testimonialImageShowPreview(reader.result, file.name, file.size);
+  reader.readAsDataURL(file);
+
+  testimonialImageSetProgress(10);
+
+  const resized = await testimonialImageResize(file);
+  testimonialImageSetProgress(30);
+
+  const form = new FormData();
+  form.append('image', resized, file.name);
+
+  try {
+    testimonialImageSetProgress(50);
+    const res = await api.upload('api/upload-testimonial-image', form);
+    testimonialImageSetProgress(100);
+
+    if (res.success && res.data?.path) {
+      $('#testimonialImagePath').value = res.data.path;
+      showToast('Gambar berhasil diupload.');
+    } else {
+      showToast(res.message || 'Upload gagal.', 'error');
+      testimonialImageRemoveImage();
+    }
+  } catch {
+    showToast('Upload gagal.', 'error');
+    testimonialImageRemoveImage();
+  } finally {
+    testimonialImageUploading = false;
+    setTimeout(() => testimonialImageSetProgress(0), 500);
+  }
+}
+
+function testimonialImageRemoveImage() {
+  $('#testimonialImagePath').value = '';
+  $('#testimonialImageFileInput').value = '';
+  testimonialImageShowPlaceholder();
+}
+
+function testimonialImageSetFromUrl(url) {
+  if (url && url.startsWith('uploads/testimonials/')) {
+    testimonialImageShowPreview('../' + url, url.split('/').pop(), 0);
+  } else {
+    testimonialImageShowPlaceholder();
+  }
+}
+
+function initTestimonialImageUpload() {
+  const dropArea = $('#testimonialImageDropArea');
+  const fileInput = $('#testimonialImageFileInput');
+  const removeBtn = $('#testimonialImageRemoveBtn');
+
+  if (!dropArea || !fileInput) return;
+
+  ['dragenter', 'dragover'].forEach((evt) => {
+    dropArea.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropArea.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach((evt) => {
+    dropArea.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-blue-950');
+    });
+  });
+
+  dropArea.addEventListener('drop', (e) => {
+    const file = e.dataTransfer?.files?.[0];
+    if (file && testimonialImageValidateFile(file)) testimonialImageUploadFile(file);
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (file && testimonialImageValidateFile(file)) testimonialImageUploadFile(file);
+    else fileInput.value = '';
+  });
+
+  removeBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    testimonialImageRemoveImage();
+  });
+}
+
+
 // async function renderTestimonials() {
 //   const res = await api.get('/dashboard/api/testimonials');
 //   if (!res.success) { showToast(res.message, 'error'); return; }
@@ -818,19 +1064,7 @@ function initOrders() {
 //     if (!res.success) { showToast(Array.isArray(res.errors) ? res.errors.join(', ') : res.message, 'error'); return; }
 //     showToast(res.message);
 //     closeModals();
-//     renderTestimonials();
-//   });
-//
-//   $('#confirmDeleteTestimonial')?.addEventListener('click', async () => {
-//     if (!_deleteTestimonialId) return;
-//     const res = await api.delete(`/dashboard/api/testimonials?id=${_deleteTestimonialId}`);
-//     if (!res.success) { showToast(res.message, 'error'); return; }
-//     showToast(res.message);
-//     closeModals();
-//     renderTestimonials();
-//     _deleteTestimonialId = null;
-//   });
-// }
+
 
 /* ----------------------------------------------------------------
  * Settings (settings)
@@ -876,5 +1110,5 @@ if (page === 'overview')     renderOverview();
 if (page === 'products')     initProducts();
 if (page === 'categories')   initCategories();
 if (page === 'orders')       initOrders();
-// if (page === 'testimonials') initTestimonials(); // disembunyikan sementara
+if (page === 'testimonials') initTestimonials();
 if (page === 'settings')     initSettings();

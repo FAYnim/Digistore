@@ -1,20 +1,21 @@
 <?php
-
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/response.php';
 
 require_method('GET');
 
-$limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 3;
-$limit = max(1, min($limit, 50));
+$offset = isset($_GET['offset']) ? max(0, (int) $_GET['offset']) : 0;
+$limit  = isset($_GET['limit']) ? max(1, min(50, (int) $_GET['limit'])) : 12;
 
 try {
-    $stmt = $pdo->query(
+    $stmt = $pdo->prepare(
         "SELECT id, name, role, message, image_path, rating
          FROM testimonials
          WHERE status = 'visible'
          ORDER BY created_at DESC
-         LIMIT $limit"
+         LIMIT ? OFFSET ?"
     );
+    $stmt->execute([$limit, $offset]);
     $rows = $stmt->fetchAll();
 
     foreach ($rows as &$row) {
@@ -29,8 +30,11 @@ try {
     json_success('Testimoni berhasil dimuat', [
         'data'     => $rows,
         'total'    => $total,
-        'has_more' => $total > $limit,
+        'offset'   => $offset,
+        'limit'    => $limit,
+        'has_more' => ($offset + $limit) < $total,
     ]);
 } catch (PDOException $e) {
     json_error('Gagal memuat testimoni', null, 500);
 }
+?>
