@@ -23,7 +23,14 @@ try {
     }
     unset($row);
 
-    json_success('Testimoni berhasil dimuat', $rows);
+    $countStmt = $pdo->query("SELECT COUNT(*) FROM testimonials WHERE status = 'visible'");
+    $total = (int) $countStmt->fetchColumn();
+
+    json_success('Testimoni berhasil dimuat', [
+        'data'     => $rows,
+        'total'    => $total,
+        'has_more' => $total > $limit,
+    ]);
 } catch (PDOException $e) {
     json_error('Gagal memuat testimoni', null, 500);
 }

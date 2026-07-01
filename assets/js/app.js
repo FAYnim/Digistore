@@ -225,6 +225,11 @@ function renderTestimonials() {
         <p class="testimonial-message">"${escapeText(item.message)}"</p>
       </article>`;
   }).join('');
+
+  const moreBtn = $('#testimonialMore');
+  if (moreBtn) {
+    moreBtn.classList.toggle('hidden', !state.testimonialsHasMore);
+  }
 }
 
 function openLightbox(src) {
@@ -325,7 +330,8 @@ async function loadLandingData() {
   state.categories = categories.data || [];
   state.products = (products.data || []).map(normalizeProduct);
   state.featured = (featured.data || []).map(normalizeProduct);
-  state.testimonials = testimonials.data || [];
+  state.testimonials = testimonials.data.data || [];
+  state.testimonialsHasMore = testimonials.data.has_more || false;
 
   renderSettings();
   applyTheme(state.settings.default_theme);

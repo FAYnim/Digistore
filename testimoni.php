@@ -70,6 +70,8 @@
 
   <script src="assets/js/api.js"></script>
   <script>
+    const $ = (s) => document.querySelector(s);
+
     const PAGE_LIMIT = 12;
     let offset = 0;
     let loading = false;

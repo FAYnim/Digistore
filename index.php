@@ -88,6 +88,9 @@
     <section id="testimoni" class="section">
       <div class="section-head"><span>Testimoni</span><h2>Dipakai pembeli yang butuh cepat dan praktis.</h2></div>
       <div id="testimonialGrid" class="mt-10 grid gap-5 lg:grid-cols-4"></div>
+      <div id="testimonialMore" class="mt-8 text-center hidden">
+        <a href="testimoni" class="secondary-btn">Lihat Testimoni Lainnya <i class="fa-solid fa-arrow-right ml-1"></i></a>
+      </div>
     </section>
 
     <section class="section">
