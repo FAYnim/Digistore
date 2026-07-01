@@ -9,7 +9,7 @@ $limit = max(1, min($limit, 50));
 
 try {
     $stmt = $pdo->query(
-        "SELECT id, name, role, message, rating
+        "SELECT id, name, role, message, image_path, rating
          FROM testimonials
          WHERE status = 'visible'
          ORDER BY created_at DESC
