@@ -868,8 +868,46 @@ function testimonialImageSetProgress(percent) {
   if (wrap) wrap.classList.toggle('hidden', percent <= 0 || percent >= 100);
 }
 
+function testimonialImageValidateFile(file) {
+  const allowed = ['image/jpeg', 'image/png'];
+  if (!allowed.includes(file.type)) {
+    showToast('Format gambar hanya JPG, JPEG, atau PNG.', 'error');
+    return false;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Ukuran gambar maksimal 2MB.', 'error');
+    return false;
+  }
+  return true;
+}
+
+async function testimonialImageResize(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const maxSize = 800;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85);
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+}
+
 async function testimonialImageUploadFile(file) {
   if (testimonialImageUploading) return;
+  if (!testimonialImageValidateFile(file)) return;
   testimonialImageUploading = true;
 
   const reader = new FileReader();
@@ -878,8 +916,11 @@ async function testimonialImageUploadFile(file) {
 
   testimonialImageSetProgress(10);
 
+  const resized = await testimonialImageResize(file);
+  testimonialImageSetProgress(30);
+
   const form = new FormData();
-  form.append('image', file, file.name);
+  form.append('image', resized, file.name);
 
   try {
     testimonialImageSetProgress(50);
@@ -939,12 +980,12 @@ function initTestimonialImageUpload() {
 
   dropArea.addEventListener('drop', (e) => {
     const file = e.dataTransfer?.files?.[0];
-    if (file) testimonialImageUploadFile(file);
+    if (file && testimonialImageValidateFile(file)) testimonialImageUploadFile(file);
   });
 
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
-    if (file) testimonialImageUploadFile(file);
+    if (file && testimonialImageValidateFile(file)) testimonialImageUploadFile(file);
     else fileInput.value = '';
   });
 
