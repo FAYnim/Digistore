@@ -4,7 +4,7 @@ $navItems = [
     ['label' => 'Produk', 'href' => 'products', 'key' => 'products', 'icon' => 'fa-solid fa-box'],
     ['label' => 'Pesanan', 'href' => 'orders', 'key' => 'orders', 'icon' => 'fa-solid fa-receipt'],
     ['label' => 'Pembayaran', 'href' => 'settings-payment', 'key' => 'payment-settings', 'icon' => 'fa-solid fa-qrcode'],
-    // ['label' => 'Testimoni', 'href' => 'testimonials', 'key' => 'testimonials', 'icon' => 'fa-solid fa-comments'], // disembunyikan sementara
+    ['label' => 'Testimoni', 'href' => 'testimonials', 'key' => 'testimonials', 'icon' => 'fa-solid fa-comments'],
     ['label' => 'Setting', 'href' => 'settings', 'key' => 'settings', 'icon' => 'fa-solid fa-gear'],
 ];
 ?>
