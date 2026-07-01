@@ -1,7 +1,5 @@
 <?php
-// Testimoni disembunyikan sementara — redirect ke overview
-header('Location: ./');
-exit;
+
 $pageTitle = 'Testimoni';
 $activePage = 'testimonials';
 require __DIR__ . '/components/layout.php';
@@ -42,6 +40,27 @@ renderHeader($pageTitle, $activePage);
         </select>
       </label>
       <label class="col-span-full">Pesan<textarea class="textarea mt-1" id="testimonialMessage" rows="3" required placeholder="Produk cepat dan aman..."></textarea></label>
+<label class="col-span-full">Gambar (opsional)
+  <div class="file-upload-area mt-1" id="testimonialImageDropArea">
+    <div class="file-upload-placeholder" id="testimonialImagePlaceholder">
+      <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-300"></i>
+      <span class="text-sm text-slate-400">Klik atau tarik file screenshot</span>
+    </div>
+    <div class="hidden" id="testimonialImagePreview">
+      <img class="mx-auto h-40 w-40 rounded-2xl object-cover" id="testimonialImagePreviewImg" alt="Preview">
+      <div class="mt-2 flex justify-center gap-2">
+        <span class="text-xs text-slate-400" id="testimonialImageFileName"></span>
+        <span class="text-xs text-slate-400" id="testimonialImageFileSize"></span>
+      </div>
+      <div class="mt-2 hidden" id="testimonialImageUploadProgress">
+        <div class="h-1 w-full rounded bg-slate-200"><div class="h-1 rounded bg-blue-500 transition-all" id="testimonialImageProgressBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <input type="file" id="testimonialImageFileInput" accept="image/jpeg,image/png" hidden>
+  </div>
+  <input type="hidden" id="testimonialImagePath">
+  <button class="btn-soft mt-2 hidden text-xs" id="testimonialImageRemoveBtn" type="button">Hapus Gambar</button>
+</label>
       <div class="flex justify-end gap-2">
         <button class="btn-soft" data-close-modal type="button">Batal</button>
         <button class="btn-primary" type="submit">Simpan</button>
