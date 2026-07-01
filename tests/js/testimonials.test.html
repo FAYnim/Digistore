@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Testimonial helper tests</title>
+</head>
+<body>
+  <h1>Test output</h1>
+  <pre id="out"></pre>
+
+  <script>
+    function getInitials(name) {
+      return (name || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+    }
+
+    function avatarColor(name) {
+      const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#f97316'];
+      let hash = 0;
+      for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return colors[Math.abs(hash) % colors.length];
+    }
+
+    function escapeText(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+    }
+
+    const out = document.getElementById('out');
+    let pass = 0, fail = 0;
+    function t(label, cond) {
+      if (cond) { pass++; out.textContent += '  ok   ' + label + '\n'; }
+      else      { fail++; out.textContent += '  FAIL ' + label + '\n'; }
+    }
+
+    t('getInitials Raka Pratama -> RP', getInitials('Raka Pratama') === 'RP');
+    t('getInitials Budi -> B',         getInitials('Budi') === 'B');
+    t('getInitials empty -> ?',         getInitials('') === '?');
+    t('getInitials sari -> S',          getInitials('sari') === 'S');
+
+    t('avatarColor returns valid hex', /^#[0-9a-f]{6}$/.test(avatarColor('Raka')));
+    t('avatarColor deterministic',     avatarColor('Raka') === avatarColor('Raka'));
+    t('avatarColor different for diff', avatarColor('Raka') !== avatarColor('Budi'));
+
+    t('escapeText <script>',  escapeText('<script>') === '&lt;script&gt;');
+    t('escapeText quotes',    escapeText('te"st') === 'te&quot;st');
+    t('escapeText ampersand', escapeText('a&b') === 'a&amp;b');
+
+    out.textContent = pass + ' passed, ' + fail + ' failed\n' + out.textContent;
+    document.title = fail === 0 ? 'PASS' : 'FAIL';
+  </script>
+</body>
+</html>
