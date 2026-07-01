@@ -73,14 +73,32 @@
       const el = document.getElementById('productDetail');
 
       if (!slug) {
-        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+        el.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--card)] border border-[var(--border)]">
+              <i class="fa-regular fa-face-frown text-4xl text-[var(--muted)]"></i>
+            </div>
+            <h2 class="font-display text-xl font-bold mb-2">Produk Tidak Ditemukan</h2>
+            <p class="text-[var(--muted)] mb-6 max-w-sm">Produk yang kamu cari sepertinya sudah tidak tersedia atau link-nya tidak valid.</p>
+            <a href="index#produk" class="primary-btn inline-flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i>Kembali ke Katalog</a>
+          </div>
+        `;
         return;
       }
 
       try {
         const res = await apiGet('/products?slug=' + encodeURIComponent(slug));
         if (!res.success || !res.data) {
-          el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Produk tidak ditemukan.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+          el.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-16 text-center">
+              <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--card)] border border-[var(--border)]">
+                <i class="fa-regular fa-face-frown text-4xl text-[var(--muted)]"></i>
+              </div>
+              <h2 class="font-display text-xl font-bold mb-2">Produk Tidak Ditemukan</h2>
+              <p class="text-[var(--muted)] mb-6 max-w-sm">Produk yang kamu cari sepertinya sudah tidak tersedia atau link-nya tidak valid.</p>
+              <a href="index#produk" class="primary-btn inline-flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i>Kembali ke Katalog</a>
+            </div>
+          `;
           return;
         }
 
@@ -129,7 +147,16 @@
 
         document.title = escapeText(p.name) + ' — DigiStore';
       } catch (err) {
-        el.innerHTML = '<div class="text-center py-12"><p class="text-red-500">Gagal memuat produk.</p><a href="index" class="text-blue-500 underline mt-3 inline-block">Kembali ke beranda</a></div>';
+        el.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--card)] border border-[var(--border)]">
+              <i class="fa-solid fa-triangle-exclamation text-4xl text-amber-500"></i>
+            </div>
+            <h2 class="font-display text-xl font-bold mb-2">Gagal Memuat Produk</h2>
+            <p class="text-[var(--muted)] mb-6 max-w-sm">Terjadi kesalahan saat mengambil data. Coba lagi nanti.</p>
+            <a href="index#produk" class="primary-btn inline-flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i>Kembali ke Katalog</a>
+          </div>
+        `;
       }
     }
 
