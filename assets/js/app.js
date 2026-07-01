@@ -7,6 +7,10 @@ const state = {
   categories: [],
   // testimonials: [], // disembunyikan sementara
   settings: {},
+  purchases: [],
+  toastIndex: 0,
+  toastStopped: false,
+  toastTimer: null,
 };
 const fallbackImage = "https://placehold.co/600x400?text=No+Image";
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
@@ -19,6 +23,83 @@ function formatRupiah(value) {
 
 function escapeText(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+}
+
+function timeAgo(dateString) {
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (seconds < 60) return "baru saja";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} menit yang lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam yang lalu`;
+  const days = Math.floor(hours / 24);
+  return `${days} hari yang lalu`;
+}
+
+function initPurchaseToast() {
+  apiGet("/recent-purchases?limit=10").then((res) => {
+    if (!res || !res.success || !Array.isArray(res.data) || res.data.length === 0) return;
+    state.purchases = res.data;
+    state.toastIndex = 0;
+    state.toastStopped = false;
+    cycleToasts();
+  });
+}
+
+function showPurchaseToast(purchase) {
+  const container = document.querySelector(".toast-container");
+  if (!container || !purchase) return;
+
+  const el = document.createElement("div");
+  el.className = "purchase-toast";
+  el.setAttribute("role", "status");
+  el.setAttribute("aria-live", "polite");
+  const productHtml = purchase.product_slug
+    ? `<a href="product?slug=${escapeText(purchase.product_slug)}" class="toast-product">${escapeText(purchase.product_name)}</a>`
+    : `<span class="toast-product">${escapeText(purchase.product_name)}</span>`;
+
+  el.innerHTML = `
+    <div class="toast-avatar">${escapeText(getInitial(purchase.customer_name))}</div>
+    <div class="toast-body">
+      <div class="toast-line"><b class="toast-name">${escapeText(purchase.customer_name)}</b> membeli ${productHtml}</div>
+      <div class="toast-time"><i class="fa-regular fa-clock"></i> ${escapeText(timeAgo(purchase.created_at))}</div>
+    </div>
+    <button class="toast-close" type="button" aria-label="Tutup notifikasi">✕</button>
+  `;
+
+  const close = () => {
+    state.toastStopped = true;
+    if (state.toastTimer) { clearTimeout(state.toastTimer); state.toastTimer = null; }
+    el.classList.add("toast-exit");
+    setTimeout(() => el.remove(), 300);
+  };
+
+  el.querySelector(".toast-close").addEventListener("click", close);
+  container.appendChild(el);
+
+  state.toastTimer = setTimeout(() => {
+    el.classList.add("toast-exit");
+    setTimeout(() => el.remove(), 300);
+    state.toastTimer = setTimeout(() => {
+      if (state.toastStopped) return;
+      state.toastIndex = (state.toastIndex + 1) % state.purchases.length;
+      cycleToasts();
+    }, 8000);
+  }, 5000);
+}
+
+function cycleToasts() {
+  if (state.toastStopped) return;
+  if (state.purchases.length === 0) return;
+  showPurchaseToast(state.purchases[state.toastIndex]);
+}
+
+function getInitial(masked) {
+  // Masked name is `R***` — keep only the leading non-star char
+  const m = String(masked || "").match(/^[^*\s]/);
+  return m ? m[0].toUpperCase() : "?";
 }
 
 function stockInfo(product) {
@@ -203,6 +284,7 @@ async function loadLandingData() {
   renderFeatured();
   renderProducts();
   // renderTestimonials(); // disembunyikan sementara
+  initPurchaseToast();
 }
 
 $("#themeToggle").addEventListener("click", () => {

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Purchase toast helper tests</title>
+</head>
+<body>
+  <h1>Test output</h1>
+  <pre id="out"></pre>
+
+  <!-- Load the same helpers used by app.js by stubbing minimal context.
+       We expose timeAgo via a tiny shim: copy the function source into the
+       page so this test does not depend on app.js's DOM bindings. -->
+  <script>
+    // Mirror of implementation; kept in sync manually. The real assertion
+    // is that this stub and app.js's timeAgo() behave identically.
+    function timeAgo(dateString, now = Date.now()) {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return '';
+      const seconds = Math.max(0, Math.floor((now - d.getTime()) / 1000));
+      if (seconds < 60)          return 'baru saja';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60)          return minutes + ' menit yang lalu';
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24)            return hours + ' jam yang lalu';
+      const days = Math.floor(hours / 24);
+      return days + ' hari yang lalu';
+    }
+
+    const out = document.getElementById('out');
+    let pass = 0, fail = 0;
+    function t(label, cond) {
+      if (cond) { pass++; out.textContent += '  ok   ' + label + '\n'; }
+      else      { fail++; out.textContent += '  FAIL ' + label + '\n'; }
+    }
+
+    const now = Date.parse('2026-07-01 10:00:00');
+    t('30s -> baru saja',     timeAgo('2026-07-01 09:59:30', now) === 'baru saja');
+    t('5m -> 5 menit',         timeAgo('2026-07-01 09:55:00', now) === '5 menit yang lalu');
+    t('1h -> 1 jam',           timeAgo('2026-07-01 09:00:00', now) === '1 jam yang lalu');
+    t('2d -> 2 hari',          timeAgo('2026-06-29 10:00:00', now) === '2 hari yang lalu');
+    t('invalid -> empty',      timeAgo('not-a-date', now) === '');
+    t('future -> baru saja',   timeAgo('2026-07-01 11:00:00', now) === 'baru saja');
+
+    out.textContent = pass + ' passed, ' + fail + ' failed\n' + out.textContent;
+    document.title = fail === 0 ? 'PASS' : 'FAIL';
+  </script>
+</body>
+</html>

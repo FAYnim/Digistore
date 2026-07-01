@@ -113,5 +113,6 @@
 
   <script src="assets/js/api.js"></script>
   <script src="assets/js/app.js"></script>
+  <div class="toast-container" aria-live="polite" aria-atomic="false"></div>
 </body>
 </html>
